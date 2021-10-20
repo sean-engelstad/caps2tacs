@@ -1,0 +1,22 @@
+14 7
+wing:area
+wing:aspect
+wing:thick
+wing:xroot
+wing:zroot
+htail:area
+htail:aspect
+htail:thick
+htail:xroot
+htail:zroot
+vtail
+fuse:length
+fuse:width
+fuse:height
+wing:wet
+wing:volume
+wing:span
+htail:prop
+vtail:prop
+fuse:wet
+fuse:volume

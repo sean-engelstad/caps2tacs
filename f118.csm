@@ -1,0 +1,120 @@
+# F-118A Boxster
+
+# wing design parameters
+DESPMTR   wing:area        4240    # area
+DESPMTR   wing:aspect      9.00    # aspect ratio
+DESPMTR   wing:thick       0.10    # thickness ratio
+DESPMTR   wing:xroot       54.0    # xloc at root LE
+DESPMTR   wing:zroot       -5.0    # zloc at root LE
+
+# horizontal tail design parameters
+DESPMTR   htail:area       1210    # htail area
+DESPMTR   htail:aspect     4.15    # htail aspect ratio
+DESPMTR   htail:thick      0.08    # htail thickness
+DESPMTR   htail:xroot       145    # xloc of root LE
+DESPMTR   htail:zroot         5    # zloc of root LE
+
+# vertical tail design parameters
+DIMENSION vtail 5 1
+DESPMTR   vtail            "610; \ # 1 vtail area
+                           1.80; \ # 2 vtail aspect ratio
+                           0.08; \ # 3 vtail thickness
+                            150; \ # 4 xloc of root LE
+                              9"   # 5 zloc of root LE
+
+# fuselage design parameters
+DESPMTR   fuse:length       180    # fuselage length
+DESPMTR   fuse:width         20    # width  of fuselage
+DESPMTR   fuse:height        20    # height of mid fuselage
+
+#------------------------------------------------
+# set available output parameters
+OUTPMTR  wing:wet
+OUTPMTR  wing:volume
+OUTPMTR  wing:span
+
+DIMENSION htail:prop 2 1
+OUTPMTR   htail:prop
+
+DIMENSION vtail:prop 2 1
+OUTPMTR   vtail:prop
+
+OUTPMTR  fuse:wet
+OUTPMTR  fuse:volume
+
+#================================================
+# Wing
+SET       wing:span      sqrt(wing:aspect*wing:area)
+SET       wing:chord     wing:area/wing:span
+
+BOX  wing:xroot  -wing:span/2  wing:zroot   wing:chord  wing:span  wing:chord*wing:thick
+SELECT body
+    ATTRIBUTE _name   $wing
+    ATTRIBUTE capsAIM $nastranAIM
+    ATTRIBUTE capsIntent $wing
+    
+SET  wing:wet    @area
+SET  wing:volume @volume
+
+SELECT face
+    ATTRIBUTE capsGroup $wing:faces
+#================================================
+# Htail
+SET       htail:span      sqrt(htail:aspect*htail:area)
+SET       htail:chord     htail:area/htail:span
+
+BOX  htail:xroot  -htail:span/2  htail:zroot   htail:chord  htail:span  htail:chord*htail:thick
+SELECT body 
+    ATTRIBUTE _name   $htail
+    ATTRIBUTE capsAIM $nastranAIM
+    ATTRIBUTE capsIntent $htail 
+    
+SET  htail:prop[1] @area
+SET  htail:prop[2] @volume
+
+SELECT face
+    ATTRIBUTE capsGroup $htail:faces
+
+#================================================
+# Vtail
+SET       vtail:span      sqrt(vtail[1]*vtail[2])
+SET       vtail:chord     vtail[1]/vtail:span
+
+BOX  vtail[4]  0  vtail[5]   vtail:chord  vtail:chord*vtail[3]  vtail:span
+SELECT body 
+    ATTRIBUTE _name   $Vtail
+    ATTRIBUTE capsAIM $nastranAIM
+    ATTRIBUTE capsIntent $vtail
+    
+SET  vtail:prop[1] @area
+SET  vtail:prop[2] @volume
+
+SELECT face
+    ATTRIBUTE capsGroup $vtail:faces
+
+#================================================
+# fuselage
+BOX  0  -fuse:width/2  -fuse:height/2   fuse:length  fuse:width  fuse:height
+SELECT body 
+    ATTRIBUTE _name   $fuselage
+    ATTRIBUTE capsAIM $nastranAIM
+    ATTRIBUTE capsIntent $fuselage
+
+#set fuse:wet and fuse:volume
+SET fuse:wet 10
+SET fuse:volume 20
+
+SELECT face
+    ATTRIBUTE capsGroup $fuselage:faces
+#================================================
+# caps forces and loads
+SELECT node 1
+    ATTRIBUTE capsLoad $force
+SELECT node 2
+    ATTRIBUTE capsConstraint $boundary
+SELECT node 3
+    ATTRIBUTE capsConstraint $boundary
+#================================================
+
+
+END
