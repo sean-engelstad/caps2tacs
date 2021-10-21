@@ -85,3 +85,5 @@ print ("Done running Nastran!")
 
 nastranAIM.postAnalysis()
 
+nastranAIM.geometry.view()
+
