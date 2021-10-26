@@ -1,0 +1,12 @@
+#design parameters
+despmtr plateLength 1.0
+despmtr plateWidth 1.0
+
+#simple plate
+box 0 0 0 plateLength plateWidth 0
+
+select body
+	attribute capsAIM $egadsTessAIM,$tacsAIM
+	attribute capsIntent $plate
+select face
+	attribute capsGroup $plate:faces

@@ -1,0 +1,10 @@
+#nFunc,nNodes
+#func1Name
+#func1Value
+#df1/dx1,df1/dy1,df1/dz1
+#...
+#df1/dx10,df1/dy10,df1/dz10
+#func2Name
+#func2Value
+#df2/dx1,df2/dy1,df2/dz1
+#...
