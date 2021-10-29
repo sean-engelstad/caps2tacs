@@ -1,5 +1,6 @@
 from __future__ import print_function
 import unittest
+import time
 
 import os
 import glob
@@ -34,6 +35,7 @@ class TestTACS(unittest.TestCase):
     def test_Plate(self): #probably want to make a function df/dX(desvarX) which runs TACS each time, then put that into parOpt
 
         filename = os.path.join("feaSimplePlate.csm")
+        #mkdir(self.problemName + str(self.iProb))
         myProblem = pyCAPS.Problem(self.problemName+str(self.iProb), capsFile=filename, outLevel=0); self.__class__.iProb += 1
 
         mesh = myProblem.analysis.create(aim="egadsTessAIM")
@@ -98,6 +100,8 @@ class TestTACS(unittest.TestCase):
         # Run Small format
         tacs.preAnalysis()
         
+        time.sleep(20)
+        
         # Create a dummy sensitivity file
         filename = os.path.join(tacs.analysisDir, tacs.input.Proj_Name+".sens")
         with open(filename, "w") as f:
@@ -126,6 +130,7 @@ class TestTACS(unittest.TestCase):
 
         self.assertEqual(Func2, 21)
 
+        print(filename)
 
 if __name__ == '__main__':
     unittest.main()
