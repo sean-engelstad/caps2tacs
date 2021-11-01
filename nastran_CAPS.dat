@@ -1,0 +1,169 @@
+ID CAPS generated Problem FOR TACS
+SOL 1
+CEND
+
+LINE=10000
+DISP (PRINT,PUNCH) = ALL
+STRE (PRINT,PUNCH) = ALL
+STRA (PRINT,PUNCH) = ALL
+SUBCASE 1
+	LABEL = Default
+	ANALYSIS = STATICS
+	SPC = 2
+	LOAD = 2
+
+BEGIN BULK
+$---1---|---2---|---3---|---4---|---5---|---6---|---7---|---8---|---9---|---10--|
+PARAM, POST, -1
+
+LOAD           2      1.      1.       1
+SPCADD         2       1
+PLOAD2         12000000.       1
+PLOAD2         12000000.       2
+PLOAD2         12000000.       3
+PLOAD2         12000000.       4
+PLOAD2         12000000.       5
+PLOAD2         12000000.       6
+PLOAD2         12000000.       7
+PLOAD2         12000000.       8
+PLOAD2         12000000.       9
+PLOAD2         12000000.      10
+PLOAD2         12000000.      11
+PLOAD2         12000000.      12
+PLOAD2         12000000.      13
+PLOAD2         12000000.      14
+PLOAD2         12000000.      15
+PLOAD2         12000000.      16
+PLOAD2         12000000.      17
+PLOAD2         12000000.      18
+PLOAD2         12000000.      19
+PLOAD2         12000000.      20
+PLOAD2         12000000.      21
+PLOAD2         12000000.      22
+PLOAD2         12000000.      23
+PLOAD2         12000000.      24
+PLOAD2         12000000.      25
+PLOAD2         12000000.      26
+PLOAD2         12000000.      27
+PLOAD2         12000000.      28
+PLOAD2         12000000.      29
+PLOAD2         12000000.      30
+PLOAD2         12000000.      31
+PLOAD2         12000000.      32
+PLOAD2         12000000.      33
+PLOAD2         12000000.      34
+PLOAD2         12000000.      35
+PLOAD2         12000000.      36
+PLOAD2         12000000.      37
+PLOAD2         12000000.      38
+PLOAD2         12000000.      39
+PLOAD2         12000000.      40
+PLOAD2         12000000.      41
+PLOAD2         12000000.      42
+PLOAD2         12000000.      43
+PLOAD2         12000000.      44
+PLOAD2         12000000.      45
+PLOAD2         12000000.      46
+PLOAD2         12000000.      47
+PLOAD2         12000000.      48
+PLOAD2         12000000.      49
+PLOAD2         12000000.      50
+PLOAD2         12000000.      51
+PLOAD2         12000000.      52
+PLOAD2         12000000.      53
+PLOAD2         12000000.      54
+PLOAD2         12000000.      55
+PLOAD2         12000000.      56
+PLOAD2         12000000.      57
+PLOAD2         12000000.      58
+PLOAD2         12000000.      59
+PLOAD2         12000000.      60
+PLOAD2         12000000.      61
+PLOAD2         12000000.      62
+PLOAD2         12000000.      63
+PLOAD2         12000000.      64
+PLOAD2         12000000.      65
+PLOAD2         12000000.      66
+PLOAD2         12000000.      67
+PLOAD2         12000000.      68
+PLOAD2         12000000.      69
+PLOAD2         12000000.      70
+PLOAD2         12000000.      71
+PLOAD2         12000000.      72
+PLOAD2         12000000.      73
+PLOAD2         12000000.      74
+PLOAD2         12000000.      75
+PLOAD2         12000000.      76
+PLOAD2         12000000.      77
+PLOAD2         12000000.      78
+PLOAD2         12000000.      79
+PLOAD2         12000000.      80
+PLOAD2         12000000.      81
+PLOAD2         12000000.      82
+PLOAD2         12000000.      83
+PLOAD2         12000000.      84
+PLOAD2         12000000.      85
+PLOAD2         12000000.      86
+PLOAD2         12000000.      87
+PLOAD2         12000000.      88
+PLOAD2         12000000.      89
+PLOAD2         12000000.      90
+PLOAD2         12000000.      91
+PLOAD2         12000000.      92
+PLOAD2         12000000.      93
+PLOAD2         12000000.      94
+PLOAD2         12000000.      95
+PLOAD2         12000000.      96
+PLOAD2         12000000.      97
+PLOAD2         12000000.      98
+PLOAD2         12000000.      99
+PLOAD2         12000000.     100
+SPC1           1  123456       1
+SPC1           1  123456       2
+SPC1           1  123456       3
+SPC1           1  123456       4
+SPC1           1  123456       5
+SPC1           1  123456       6
+SPC1           1  123456       7
+SPC1           1  123456       8
+SPC1           1  123456       9
+SPC1           1  123456      10
+SPC1           1  123456      11
+SPC1           1  123456      12
+SPC1           1  123456      13
+SPC1           1  123456      14
+SPC1           1  123456      15
+SPC1           1  123456      16
+SPC1           1  123456      17
+SPC1           1  123456      18
+SPC1           1  123456      19
+SPC1           1  123456      20
+SPC1           1  123456      21
+SPC1           1  123456      22
+SPC1           1  123456      23
+SPC1           1  123456      24
+SPC1           1  123456      25
+SPC1           1  123456      26
+SPC1           1  123456      27
+SPC1           1  123456      28
+SPC1           1  123456      29
+SPC1           1  123456      30
+SPC1           1  123456      31
+SPC1           1  123456      32
+SPC1           1  123456      33
+SPC1           1  123456      34
+SPC1           1  123456      35
+SPC1           1  123456      36
+SPC1           1  123456      37
+SPC1           1  123456      38
+SPC1           1  123456      39
+SPC1           1  123456      40
+MAT1           1 7.2E+10            0.33   2800.      0.      0.      0.
+PSHELL         1       1   6.E-3       1      1.       10.833333
+DESVAR         1plateLen      0.      0.      0.      0.
+DESVAR         2plateWid      0.      0.      0.      0.
+DESVAR         3stiffHei      0.      0.      0.      0.
+
+INCLUDE 'nastran_CAPS.bdf'
+
+ENDDATA

@@ -7,16 +7,14 @@ Created on Fri Oct 29 16:52:03 2021
 """
 
 from __future__ import print_function
+
 import unittest
-import time
 
-import os
-import glob
-import shutil
-
-import sys
+import os, glob, util, sys
 
 import pyCAPS
+
+from pytacs import pyTACS
 
 class TestTACS(unittest.TestCase):
 

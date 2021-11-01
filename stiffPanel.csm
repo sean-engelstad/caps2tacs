@@ -1,4 +1,3 @@
-
 # Design Parameters:
 despmtr   plateLength       0.50000
 despmtr   plateWidth        0.25000
@@ -14,7 +13,7 @@ attribute capsGroup   $plate
 attribute capsLoad   $plate
 
 select body
-    attribute capsAIM $egadsAIM, tacsAIM
+    attribute capsAIM $egadsTessAIM;tacsAIM
 
 patbeg    i  4
    select edge i 
@@ -28,17 +27,17 @@ skbeg    0  plateWidth/2 0
     linseg plateLength   plateWidth/2    0
 skend    0
 extrude    0  0  stiffHeight
-attribute capsGroup $stifener
+attribute capsGroup $stiffener
 attribute capsLoad $stiffener
 
 select body
-    attribute capsAIM $egadsAIM, tacsAIM
+    attribute capsAIM $egadsTessAIM;tacsAIM
 
 patbeg    i  4
-   select edge i 
-   attribute capsConnect $plateEdge
-   select node i 
-   attribute capsConstraint $plateEdge
+   ifthen i EQ 3
+       select edge i
+       attribute capsConnect $weld
+    endif
 patend
 
 end
