@@ -14,7 +14,11 @@ import os, glob, shutil, sys
 
 import pyCAPS
 
+import numpy as np
+
 from tacs.pytacs import pyTACS
+
+from tacs import functions
 
 class TestTACS(unittest.TestCase):
 
@@ -76,6 +80,7 @@ class TestTACS(unittest.TestCase):
                   "material"        : "madeupium",
                   "bendingInertiaRatio" : 1.0, # Default
                   "shearMembraneRatio"  : 5.0/6.0} # Default
+        #need to add the strength here
 
         tacs.input.Property = {"plate": shell,
                                "stiffener": shell}
@@ -121,6 +126,7 @@ class TestTACS(unittest.TestCase):
         shutil.move(bdf_dir,bdf_newdir)
         shutil.move(dat_dir,data_newdir)
         
+        #pytacs
         structOptions = {'writeSolution': True, }
 
 
@@ -128,15 +134,42 @@ class TestTACS(unittest.TestCase):
         # Load BDF file
         FEASolver = pyTACS(datFile, options=structOptions)
         # Set up TACS Assembler
+        FEASolver.createTACSAssembler()
+        #add functions
+        FEASolver.addFunction('wing_mass', functions.StructuralMass)
+        FEASolver.addFunction('ks_vmfailure', functions.KSFailure, safetyFactor=1.5,
+                      KSWeight=100.0)
+        evalFuncs = ['wing_mass', 'ks_vmfailure']
         
         # Read in forces from BDF and create tacs struct problems
         SPs = FEASolver.createTACSProbsFromBDF()
-        print("ran pytacs")
+        #print("ran pytacs")
         # Solve each structural problem and write solutions
+        funcs = {}; funcsSens = {}
         for caseID in SPs:
             FEASolver(SPs[caseID])
+            FEASolver.evalFunctions(SPs[caseID], funcs,evalFuncs=evalFuncs)
+            FEASolver.evalFunctionsSens(SPs[caseID], funcsSens,evalFuncs=evalFuncs)
             FEASolver.writeSolution(outputDir=os.path.dirname(__file__))
-
-
+            
+        print(funcs)
+        print(funcsSens)
+        
+        
+        #might not have the node order right
+        dfdX = funcsSens['load_set_001_wing_mass']['Xpts']
+        #sens w.r.t. x1,y1,z1,x2,y2,z2,...
+        #but 1,2,3,... might not match bdf nodes
+        
+        #reorder nodes, start at
+        TACSnodeMap = FEASolver._getGlobalToLocalNodeIDDict()
+        dfdX = dfdX.reshape(242,3)
+        dfdX_bdf = np.zeros((242,3))
+        for i in range(242):
+            #i is bdf node, tacsNode is globalNode
+            tacsNode = TACSnodeMap[i]
+            dfdX_bdf[i,:] = dfdX[tacsNode,:]
+            
+        #now use dfdX_bdf for the sensitivity back to ESP/CAPS
 if __name__ == '__main__':
     unittest.main()

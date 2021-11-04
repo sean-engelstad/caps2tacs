@@ -10,7 +10,7 @@ SUBCASE 1
 	LABEL = Default
 	ANALYSIS = STATICS
 	SPC = 2
-	LOAD = 1
+	LOAD = 2
 
 BEGIN BULK
 $---1---|---2---|---3---|---4---|---5---|---6---|---7---|---8---|---9---|---10--|
