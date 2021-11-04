@@ -79,7 +79,8 @@ class TestTACS(unittest.TestCase):
                   "bendingInertiaRatio" : 1.0, # Default
                   "shearMembraneRatio"  : 5.0/6.0} # Default
 
-        tacs.input.Property = {"plate": shell}
+        tacs.input.Property = {"plate": shell,
+                               "stiffener": shell}
 
         # Set constraints
         constraint = {"groupName" : "plateEdge",
@@ -111,7 +112,7 @@ class TestTACS(unittest.TestCase):
         
         orig_dir = os.getcwd()
         
-        caps_dir = '/home/sengelstad6/git/caps2tacs/workDir_tacs1/Scratch/tacs'
+        caps_dir = os.path.join(orig_dir,'workDir_tacs1/Scratch/tacs')
         
         bdf_dir = os.path.join(caps_dir,bdf_file)
         dat_dir = os.path.join(caps_dir,dat_file)

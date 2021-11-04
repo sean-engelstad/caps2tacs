@@ -14,7 +14,7 @@ attribute capsLoad   $plate
 
 select body
     attribute capsAIM $egadsTessAIM;tacsAIM
-
+    attribute capsGroup $plate
 patbeg    i  4
    select edge i 
    attribute capsConstraint $plateEdge

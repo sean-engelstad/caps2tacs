@@ -10,11 +10,11 @@ from __future__ import print_function
 
 import unittest
 
-import os, glob, util, sys
+import os, glob, shutil, sys
 
 import pyCAPS
 
-from pytacs import pyTACS
+from tacs.pytacs import pyTACS
 
 class TestTACS(unittest.TestCase):
 
@@ -77,7 +77,8 @@ class TestTACS(unittest.TestCase):
                   "bendingInertiaRatio" : 1.0, # Default
                   "shearMembraneRatio"  : 5.0/6.0} # Default
 
-        tacs.input.Property = {"plate": shell}
+        tacs.input.Property = {"plate": shell,
+                               "stiffener": shell}
 
         # Set constraints
         constraint = {"groupName" : "plateEdge",
@@ -109,7 +110,7 @@ class TestTACS(unittest.TestCase):
         
         orig_dir = os.getcwd()
         
-        caps_dir = '/home/sengelstad6/git/caps2tacs/workDir_tacs1/Scratch/tacs'
+        caps_dir = os.path.join(orig_dir,'workDir_tacs1/Scratch/tacs')
         
         bdf_dir = os.path.join(caps_dir,bdf_file)
         dat_dir = os.path.join(caps_dir,dat_file)
@@ -119,6 +120,23 @@ class TestTACS(unittest.TestCase):
         
         shutil.move(bdf_dir,bdf_newdir)
         shutil.move(dat_dir,data_newdir)
+        
+        structOptions = {'writeSolution': True, }
+
+
+        datFile = os.path.join(os.path.dirname(__file__), 'nastran_CAPS.dat')
+        # Load BDF file
+        FEASolver = pyTACS(datFile, options=structOptions)
+        # Set up TACS Assembler
+        
+        # Read in forces from BDF and create tacs struct problems
+        SPs = FEASolver.createTACSProbsFromBDF()
+        print("ran pytacs")
+        # Solve each structural problem and write solutions
+        for caseID in SPs:
+            FEASolver(SPs[caseID])
+            FEASolver.writeSolution(outputDir=os.path.dirname(__file__))
+
 
 if __name__ == '__main__':
     unittest.main()
