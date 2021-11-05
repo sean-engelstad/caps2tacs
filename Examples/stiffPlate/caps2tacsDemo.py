@@ -19,157 +19,145 @@ import numpy as np
 from tacs.pytacs import pyTACS
 
 from tacs import functions
+#probably want to make a function df/dX(desvarX) which runs TACS each time, then put that into parOpt
 
-class TestTACS(unittest.TestCase):
+#filename = os.path.join("stiffPanel.csm")
+filename = os.path.join("stiffPlate_test.csm")
 
-    @classmethod
-    def setUpClass(cls):
+#mkdir(self.problemName + str(self.iProb))
+myProblem = pyCAPS.Problem('myCAPS', capsFile=filename, outLevel=0)
 
-        cls.problemName = "workDir_tacs"
-        cls.iProb = 1
-        cls.cleanUp()
+mesh = myProblem.analysis.create(aim="egadsTessAIM")
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.cleanUp()
+tacs = myProblem.analysis.create(aim = "tacsAIM",
+                                 name = "tacs")
 
-    @classmethod
-    def cleanUp(cls):
+mesh.input.Edge_Point_Min = 15
+mesh.input.Edge_Point_Max = 20
 
-        # Remove analysis directories
-        dirs = glob.glob( cls.problemName + '*')
-        for dir in dirs:
-            if os.path.isdir(dir):
-                shutil.rmtree(dir)
+mesh.input.Mesh_Elements = "Quad"
 
-    def test_Plate(self): #probably want to make a function df/dX(desvarX) which runs TACS each time, then put that into parOpt
+mesh.input.Tess_Params = [.25,.01,15]
 
-        filename = os.path.join("stiffPanel.csm")
-        #mkdir(self.problemName + str(self.iProb))
-        myProblem = pyCAPS.Problem(self.problemName+str(self.iProb), capsFile=filename, outLevel=0); self.__class__.iProb += 1
+NumberOfNode = mesh.output.NumberOfNode
 
-        mesh = myProblem.analysis.create(aim="egadsTessAIM")
-        
-        tacs = myProblem.analysis.create(aim = "tacsAIM",
-                                         name = "tacs")
+# Link the mesh
+tacs.input["Mesh"].link(mesh.output["Surface_Mesh"])
 
-        mesh.input.Edge_Point_Min = 10
-        mesh.input.Edge_Point_Max = 20
+# Set analysis type
+tacs.input.Analysis_Type = "Static"
 
-        mesh.input.Mesh_Elements = "Quad"
+madeupium    = {"materialType" : "isotropic",
+                "youngModulus" : 72.0E9 ,
+                "poissonRatio": 0.33,
+                "density" : 2.8E3,
+                "tensionAllow" :  20.0e7}
 
-        mesh.input.Tess_Params = [.25,.01,15]
-        
-        # Link the mesh
-        tacs.input["Mesh"].link(mesh.output["Surface_Mesh"])
+tacs.input.Material = {"Madeupium": madeupium}
 
-        # Set analysis type
-        tacs.input.Analysis_Type = "Static"
+# Set properties
+shell  = {"propertyType" : "Shell",
+          "membraneThickness" : 0.006,
+          "material"        : "madeupium",
+          "bendingInertiaRatio" : 1.0, # Default
+          "shearMembraneRatio"  : 5.0/6.0} # Default
+#need to add the strength here
 
-        # Set materials/home/sengelstad6/git/caps2tacs/workDir_tacs1/Scratch/tacs/nastran_CAPS.bdf
-        madeupium    = {"materialType" : "isotropic",
-                        "youngModulus" : 72.0E9 ,
-                        "poissonRatio": 0.33,
-                        "density" : 2.8E3}
+tacs.input.Property = {"plate": shell,
+                       "stiffener": shell}
 
-        tacs.input.Material = {"Madeupium": madeupium}
-        
-        # Set properties
-        shell  = {"propertyType" : "Shell",
-                  "membraneThickness" : 0.006,
-                  "material"        : "madeupium",
-                  "bendingInertiaRatio" : 1.0, # Default
-                  "shearMembraneRatio"  : 5.0/6.0} # Default
-        #need to add the strength here
+# Set constraints
+constraint = {"groupName" : "plateEdge",
+              "dofConstraint" : 123456}
 
-        tacs.input.Property = {"plate": shell,
-                               "stiffener": shell}
+tacs.input.Constraint = {"edgeConstraint": constraint}
 
-        # Set constraints
-        constraint = {"groupName" : "plateEdge",
-                      "dofConstraint" : 123456}
+# Set load
+load = {"groupName" : "plate",
+        "loadType" : "Pressure",
+        "pressureForce" : 2.e6}
 
-        tacs.input.Constraint = {"edgeConstraint": constraint}
+# Set loads
+tacs.input.Load = {"appliedPressure": load }
 
-        # Set load
-        load = {"groupName" : "plate",
-                "loadType" : "Pressure",
-                "pressureForce" : 2.e6}
+tacs.input.Design_Variable = {"plateLength" : {},
+                              "plateWidth"  : {},
+                              "stiffHeight" : {}}
 
-        # Set loads
-        tacs.input.Load = {"appliedPressure": load }
+# Run Small format
+tacs.preAnalysis()
 
-        tacs.input.Design_Variable = {"plateLength" : {},
-                                      "plateWidth"  : {},
-                                      "stiffHeight" : {}}
-
-        # Run Small format
-        tacs.preAnalysis()
-        
-        #tacs.geometry.view()
-        
-        #time.sleep(20)
-        
-        bdf_file = 'nastran_CAPS.bdf'
-        dat_file = 'nastran_CAPS.dat'
-        
-        orig_dir = os.getcwd()
-        
-        caps_dir = os.path.join(orig_dir,'workDir_tacs1/Scratch/tacs')
-        
-        bdf_dir = os.path.join(caps_dir,bdf_file)
-        dat_dir = os.path.join(caps_dir,dat_file)
-        
-        bdf_newdir = os.path.join(orig_dir,bdf_file)
-        data_newdir = os.path.join(orig_dir,dat_file)
-        
-        shutil.move(bdf_dir,bdf_newdir)
-        shutil.move(dat_dir,data_newdir)
-        
-        #pytacs
-        structOptions = {'writeSolution': True, }
+#tacs.geometry.view()
 
 
-        datFile = os.path.join(os.path.dirname(__file__), 'nastran_CAPS.dat')
-        # Load BDF file
-        FEASolver = pyTACS(datFile, options=structOptions)
-        # Set up TACS Assembler
-        FEASolver.createTACSAssembler()
-        #add functions
-        FEASolver.addFunction('wing_mass', functions.StructuralMass)
-        FEASolver.addFunction('ks_vmfailure', functions.KSFailure, safetyFactor=1.5,
-                      KSWeight=100.0)
-        evalFuncs = ['wing_mass', 'ks_vmfailure']
-        
-        # Read in forces from BDF and create tacs struct problems
-        SPs = FEASolver.createTACSProbsFromBDF()
-        #print("ran pytacs")
-        # Solve each structural problem and write solutions
-        funcs = {}; funcsSens = {}
-        for caseID in SPs:
-            FEASolver(SPs[caseID])
-            FEASolver.evalFunctions(SPs[caseID], funcs,evalFuncs=evalFuncs)
-            FEASolver.evalFunctionsSens(SPs[caseID], funcsSens,evalFuncs=evalFuncs)
-            FEASolver.writeSolution(outputDir=os.path.dirname(__file__))
-            
-        print(funcs)
-        print(funcsSens)
-        
-        
-        #might not have the node order right
-        dfdX = funcsSens['load_set_001_wing_mass']['Xpts']
-        #sens w.r.t. x1,y1,z1,x2,y2,z2,...
-        #but 1,2,3,... might not match bdf nodes
-        
-        #reorder nodes, start at
-        TACSnodeMap = FEASolver._getGlobalToLocalNodeIDDict()
-        dfdX = dfdX.reshape(242,3)
-        dfdX_bdf = np.zeros((242,3))
-        for i in range(242):
-            #i is bdf node, tacsNode is globalNode
-            tacsNode = TACSnodeMap[i]
-            dfdX_bdf[i,:] = dfdX[tacsNode,:]
-            
-        #now use dfdX_bdf for the sensitivity back to ESP/CAPS
-if __name__ == '__main__':
-    unittest.main()
+
+#pytacs
+structOptions = {'writeSolution': True, }
+
+caps_dir = os.path.join(os.getcwd(),'myCAPS/Scratch/tacs')
+datFile = os.path.join(caps_dir, 'nastran_CAPS.dat')
+
+# Load BDF file
+FEASolver = pyTACS(datFile, options=structOptions)
+# Set up TACS Assembler
+FEASolver.createTACSAssembler()
+#add functions
+FEASolver.addFunction('wing_mass', functions.StructuralMass)
+FEASolver.addFunction('ks_vmfailure', functions.KSFailure, safetyFactor=1.5,
+              KSWeight=100.0)
+evalFuncs = ['wing_mass', 'ks_vmfailure']
+
+# Read in forces from BDF and create tacs struct problems
+SPs = FEASolver.createTACSProbsFromBDF()
+#print("ran pytacs")
+# Solve each structural problem and write solutions
+funcs = {}; funcsSens = {}
+for caseID in SPs:
+    FEASolver(SPs[caseID])
+    FEASolver.evalFunctions(SPs[caseID], funcs,evalFuncs=evalFuncs)
+    FEASolver.evalFunctionsSens(SPs[caseID], funcsSens,evalFuncs=evalFuncs)
+    FEASolver.writeSolution(outputDir=os.path.dirname(__file__))
+
+funcKeys = funcs.keys()
+nfunc = len(funcKeys)
+
+dfdX = funcsSens['load_set_001_wing_mass']['Xpts']
+
+
+#reorder nodes, start at
+TACSnodeMap = FEASolver._getGlobalToLocalNodeIDDict() #error in nodemap, less nodes
+#print(TACSnodeMap)
+
+#nnodes = int(len(dfdX)/3)
+#dfdX = dfdX.reshape(nnodes,3)
+
+#dfdX_bdf = np.zeros((nnodes,3))
+#print(len(TACSnodeMap))
+#for i in range(nnodes):
+#    #i is bdf node, tacsNode is globalNode
+#    tacsNode = TACSnodeMap[i]
+#    dfdX_bdf[i,:] = dfdX[tacsNode,:]
+
+filename = os.path.join(tacs.analysisDir, tacs.input.Proj_Name+".sens")
+with open(filename, "w") as f:
+    f.write("{} {}\n".format(nfunc,NumberOfNode))
+    for key in funcKeys:
+        cSens = funcsSens[key]['Xpts']
+        cSens = cSens.reshape(NumberOfNode,3)
+        f.write(key + "\n")
+        f.write("{}\n".format(funcs[key]))
+        for nodeind in range(NumberOfNode): # d(Func1)/d(xyz)
+            f.write("{} {} {}\n".format(cSens[nodeind,0], cSens[nodeind,1], cSens[nodeind,2]))
+
+tacs.postAnalysis()
+
+desKeys = tacs.input.Design_Variable.keys()
+ndesVar = len(desKeys)
+func = {}
+sens = {}
+for key in funcKeys:
+    func[key] = tacs.dynout[key].value
+    for desKey in desKeys:
+        sens[key][desKey] = tacs.dynout[key].deriv(desKey)
+print("Functions: ",func)
+print("Sensitivities: ",sens)

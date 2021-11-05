@@ -42,7 +42,8 @@ class TestTACS(unittest.TestCase):
 
     def test_Plate(self): #probably want to make a function df/dX(desvarX) which runs TACS each time, then put that into parOpt
 
-        filename = os.path.join("stiffPanel.csm")
+        #filename = os.path.join("stiffPanel.csm")
+        filename = os.path.join("stiffPlate_test.csm")
         #mkdir(self.problemName + str(self.iProb))
         myProblem = pyCAPS.Problem(self.problemName+str(self.iProb), capsFile=filename, outLevel=0); self.__class__.iProb += 1
 
@@ -51,12 +52,12 @@ class TestTACS(unittest.TestCase):
         tacs = myProblem.analysis.create(aim = "tacsAIM",
                                          name = "tacs")
 
-        mesh.input.Edge_Point_Min = 10
-        mesh.input.Edge_Point_Max = 20
+        mesh.input.Edge_Point_Min = 4
+        mesh.input.Edge_Point_Max = 10
 
         mesh.input.Mesh_Elements = "Quad"
 
-        mesh.input.Tess_Params = [.25,.01,15]
+        mesh.input.Tess_Params = [.20,.01,15]
         
         # Link the mesh
         tacs.input["Mesh"].link(mesh.output["Surface_Mesh"])
@@ -64,7 +65,7 @@ class TestTACS(unittest.TestCase):
         # Set analysis type
         tacs.input.Analysis_Type = "Static"
 
-        # Set materials/home/sengelstad6/git/caps2tacs/workDir_tacs1/Scratch/tacs/nastran_CAPS.bdf
+        #HOW TO ADD MATERIAL STRENGTH here? need that for pytacs
         madeupium    = {"materialType" : "isotropic",
                         "youngModulus" : 72.0E9 ,
                         "poissonRatio": 0.33,
@@ -103,7 +104,7 @@ class TestTACS(unittest.TestCase):
         # Run Small format
         tacs.preAnalysis()
         
-        #tacs.geometry.view()
+        tacs.geometry.view()
         
         #time.sleep(20)
         

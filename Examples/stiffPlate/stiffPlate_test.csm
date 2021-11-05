@@ -1,0 +1,36 @@
+# Design Parameters
+despmtr   plateLength       1.0
+despmtr   plateWidth        0.5
+despmtr stiffHeight         0.05
+
+# plate segments
+skbeg     0   0   0
+   linseg    plateLength   0   0
+skend     0
+extrude   0   plateWidth   0
+
+attribute capsGroup $plate
+attribute capsLoad   $plate
+attribute capsAIM $egadsTessAIM;tacsAIM    
+    
+    
+patbeg    i  4
+   select edge i 
+   attribute capsConstraint $plateEdge
+   select node i 
+   attribute capsConstraint $plateEdge     
+patend   
+
+#stiffener
+skbeg    plateLength/2  0 0
+    linseg plateLength/2   plateWidth    0
+skend    0
+extrude    0  0  stiffHeight
+
+attribute capsAIM $egadsTessAIM;tacsAIM
+attribute capsGroup $stiffener
+attribute capsLoad $stiffener
+
+UNION
+
+attribute capsAIM $egadsTessAIM;tacsAIM
