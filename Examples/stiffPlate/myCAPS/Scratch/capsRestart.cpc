@@ -1,8 +1,8 @@
 # /home/sengelstad6/git/caps2tacs/Examples/stiffPlate/myCAPS/Scratch/capsRestart.cpc written by ocsmSave (v1.21)
 
 # Constant, Design, and Output Parameters:
-despmtr   plateLength       1.00000
-despmtr   plateWidth       0.50000
+despmtr   plateLength       0.40000
+despmtr   plateWidth       1.00000
 despmtr   stiffHeight       0.05000
 
 # Global Attributes:
@@ -21,14 +21,33 @@ attribute capsConstraint   $plateEdge
    select    node   i
 attribute capsConstraint   $plateEdge
 patend
-skbeg     plateLength/2   0   0   0
-   linseg    plateLength/2   plateWidth   0
+skbeg     0.2*plateLength   0   0   0
+   linseg    0.2*plateLength   plateWidth   0
 skend     0
 extrude   0   0   stiffHeight
 attribute capsAIM   $egadsTessAIM;tacsAIM
 attribute capsGroup   $stiffener
 attribute capsLoad   $stiffener
-union     0   0   0
+skbeg     0.4*plateLength   0   0   0
+   linseg    0.4*plateLength   plateWidth   0
+skend     0
+extrude   0   0   stiffHeight
 attribute capsAIM   $egadsTessAIM;tacsAIM
+attribute capsGroup   $stiffener
+attribute capsLoad   $stiffener
+skbeg     0.6*plateLength   0   0   0
+   linseg    0.6*plateLength   plateWidth   0
+skend     0
+extrude   0   0   stiffHeight
+attribute capsAIM   $egadsTessAIM;tacsAIM
+attribute capsGroup   $stiffener
+attribute capsLoad   $stiffener
+skbeg     0.8*plateLength   0   0   0
+   linseg    0.8*plateLength   plateWidth   0
+skend     0
+extrude   0   0   stiffHeight
+attribute capsAIM   $egadsTessAIM;tacsAIM
+attribute capsGroup   $stiffener
+attribute capsLoad   $stiffener
 
 end

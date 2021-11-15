@@ -6,15 +6,9 @@ Created on Fri Oct 29 16:52:03 2021
 @author: sengelstad6
 """
 
-from __future__ import print_function
-
-import unittest
-
-import os, glob, shutil, sys
+import os
 
 import pyCAPS
-
-import numpy as np
 
 from tacs.pytacs import pyTACS
 
@@ -22,14 +16,16 @@ from tacs import functions
 #probably want to make a function df/dX(desvarX) which runs TACS each time, then put that into parOpt
 
 #filename = os.path.join("stiffPanel.csm")
-filename = os.path.join("stiffPlate_test.csm")
+filename = os.path.join("stiffPanel2.csm")
 
 #mkdir(self.problemName + str(self.iProb))
 myProblem = pyCAPS.Problem('myCAPS', capsFile=filename, outLevel=0)
 
+#myProblem.geometry.view()
+
 mesh = myProblem.analysis.create(aim="egadsTessAIM")
 
-tacs = myProblem.analysis.create(aim = "tacsAIM",
+tacsAnalysis = myProblem.analysis.create(aim = "tacsAIM",
                                  name = "tacs")
 
 mesh.input.Edge_Point_Min = 15
@@ -42,10 +38,10 @@ mesh.input.Tess_Params = [.25,.01,15]
 NumberOfNode = mesh.output.NumberOfNode
 
 # Link the mesh
-tacs.input["Mesh"].link(mesh.output["Surface_Mesh"])
+tacsAnalysis.input["Mesh"].link(mesh.output["Surface_Mesh"])
 
 # Set analysis type
-tacs.input.Analysis_Type = "Static"
+tacsAnalysis.input.Analysis_Type = "Static"
 
 madeupium    = {"materialType" : "isotropic",
                 "youngModulus" : 72.0E9 ,
@@ -53,7 +49,7 @@ madeupium    = {"materialType" : "isotropic",
                 "density" : 2.8E3,
                 "tensionAllow" :  20.0e7}
 
-tacs.input.Material = {"Madeupium": madeupium}
+tacsAnalysis.input.Material = {"Madeupium": madeupium}
 
 # Set properties
 shell  = {"propertyType" : "Shell",
@@ -63,14 +59,14 @@ shell  = {"propertyType" : "Shell",
           "shearMembraneRatio"  : 5.0/6.0} # Default
 #need to add the strength here
 
-tacs.input.Property = {"plate": shell,
+tacsAnalysis.input.Property = {"plate": shell,
                        "stiffener": shell}
 
 # Set constraints
 constraint = {"groupName" : "plateEdge",
               "dofConstraint" : 123456}
 
-tacs.input.Constraint = {"edgeConstraint": constraint}
+tacsAnalysis.input.Constraint = {"edgeConstraint": constraint}
 
 # Set load
 load = {"groupName" : "plate",
@@ -78,14 +74,14 @@ load = {"groupName" : "plate",
         "pressureForce" : 2.e6}
 
 # Set loads
-tacs.input.Load = {"appliedPressure": load }
+tacsAnalysis.input.Load = {"appliedPressure": load }
 
-tacs.input.Design_Variable = {"plateLength" : {},
+tacsAnalysis.input.Design_Variable = {"plateLength" : {},
                               "plateWidth"  : {},
                               "stiffHeight" : {}}
 
 # Run Small format
-tacs.preAnalysis()
+tacsAnalysis.preAnalysis()
 
 #tacs.geometry.view()
 
@@ -138,7 +134,7 @@ TACSnodeMap = FEASolver._getGlobalToLocalNodeIDDict() #error in nodemap, less no
 #    tacsNode = TACSnodeMap[i]
 #    dfdX_bdf[i,:] = dfdX[tacsNode,:]
 
-filename = os.path.join(tacs.analysisDir, tacs.input.Proj_Name+".sens")
+filename = os.path.join(tacsAnalysis.analysisDir, tacsAnalysis.input.Proj_Name+".sens")
 with open(filename, "w") as f:
     f.write("{} {}\n".format(nfunc,NumberOfNode))
     for key in funcKeys:
@@ -149,15 +145,19 @@ with open(filename, "w") as f:
         for nodeind in range(NumberOfNode): # d(Func1)/d(xyz)
             f.write("{} {} {}\n".format(cSens[nodeind,0], cSens[nodeind,1], cSens[nodeind,2]))
 
-tacs.postAnalysis()
+tacsAnalysis.postAnalysis()
 
-desKeys = tacs.input.Design_Variable.keys()
+#print(dir(tacsAnalysis))
+
+desKeys = tacsAnalysis.input.Design_Variable.keys()
 ndesVar = len(desKeys)
 func = {}
 sens = {}
 for key in funcKeys:
-    func[key] = tacs.dynout[key].value
+    func[key] = tacsAnalysis.dynout[key].value
+    sens[key] = {}
     for desKey in desKeys:
-        sens[key][desKey] = tacs.dynout[key].deriv(desKey)
+        sens[key][desKey] = tacsAnalysis.dynout[key].deriv(desKey)
+#could convert func and sens to array/vec instead of nested dictionary
 print("Functions: ",func)
 print("Sensitivities: ",sens)

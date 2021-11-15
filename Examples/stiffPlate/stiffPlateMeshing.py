@@ -43,7 +43,7 @@ class TestTACS(unittest.TestCase):
     def test_Plate(self): #probably want to make a function df/dX(desvarX) which runs TACS each time, then put that into parOpt
 
         #filename = os.path.join("stiffPanel.csm")
-        filename = os.path.join("stiffPlate_test.csm")
+        filename = os.path.join("stiffPanel2.csm")
         #mkdir(self.problemName + str(self.iProb))
         myProblem = pyCAPS.Problem(self.problemName+str(self.iProb), capsFile=filename, outLevel=0); self.__class__.iProb += 1
 

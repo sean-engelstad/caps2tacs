@@ -1,0 +1,87 @@
+ID CAPS generated Problem FOR TACS
+SOL 1
+CEND
+
+LINE=10000
+DISP (PRINT,PUNCH) = ALL
+STRE (PRINT,PUNCH) = ALL
+STRA (PRINT,PUNCH) = ALL
+SUBCASE 1
+	LABEL = Default
+	ANALYSIS = STATICS
+	SPC = 2
+	LOAD = 2
+
+BEGIN BULK
+$---1---|---2---|---3---|---4---|---5---|---6---|---7---|---8---|---9---|---10--|
+PARAM, POST, -1
+
+LOAD           2      1.      1.       1
+SPCADD         2       1
+PLOAD2         12000000.       1
+PLOAD2         12000000.       2
+PLOAD2         12000000.       3
+PLOAD2         12000000.       4
+PLOAD2         12000000.       5
+PLOAD2         12000000.       6
+PLOAD2         12000000.       7
+PLOAD2         12000000.       8
+PLOAD2         12000000.       9
+PLOAD2         12000000.      10
+PLOAD2         12000000.      11
+PLOAD2         12000000.      12
+PLOAD2         12000000.      13
+PLOAD2         12000000.      14
+PLOAD2         12000000.      15
+PLOAD2         12000000.      16
+PLOAD2         12000000.      17
+PLOAD2         12000000.      18
+PLOAD2         12000000.      19
+PLOAD2         12000000.      20
+PLOAD2         12000000.      21
+PLOAD2         12000000.      22
+PLOAD2         12000000.      23
+PLOAD2         12000000.      24
+PLOAD2         12000000.      25
+PLOAD2         12000000.      26
+PLOAD2         12000000.      27
+PLOAD2         12000000.      28
+PLOAD2         12000000.      29
+PLOAD2         12000000.      30
+PLOAD2         12000000.      31
+PLOAD2         12000000.      32
+SPC1           1  123456       1
+SPC1           1  123456       2
+SPC1           1  123456       3
+SPC1           1  123456       4
+SPC1           1  123456       5
+SPC1           1  123456       6
+SPC1           1  123456       7
+SPC1           1  123456       8
+SPC1           1  123456       9
+SPC1           1  123456      10
+SPC1           1  123456      11
+SPC1           1  123456      12
+SPC1           1  123456      13
+SPC1           1  123456      14
+SPC1           1  123456      15
+SPC1           1  123456      16
+SPC1           1  123456      17
+SPC1           1  123456      18
+SPC1           1  123456      19
+SPC1           1  123456      20
+SPC1           1  123456      21
+SPC1           1  123456      22
+SPC1           1  123456      23
+SPC1           1  123456      24
+MAT1           1 7.2E+10            0.33   2800.      0.      0.      0.+0      
++0            0.      0.      0.
+PSHELL         1       1   6.E-3       1      1.       10.833333
+PSHELL         2       1   6.E-3       1      1.       10.833333
+DESVAR         1plateLen      0.      0.      0.      0.
+DESVAR         2plateWid      0.      0.      0.      0.
+DESVAR         3stiffHei      0.      0.      0.      0.
+
+INCLUDE 'nastran_CAPS.bdf'
+
+ENDDATA

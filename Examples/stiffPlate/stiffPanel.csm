@@ -1,6 +1,6 @@
 # Design Parameters:
-despmtr   plateLength       1.0
-despmtr   plateWidth        0.5
+despmtr   plateLength       0.3
+despmtr   plateWidth        1.0
 despmtr stiffHeight         0.05
 despmtr nstiff              4
 despmtr nx                  1
