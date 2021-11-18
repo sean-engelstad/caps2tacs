@@ -1,33 +1,61 @@
 # /home/sengelstad6/git/caps2tacs/stiffPlate/myCAPS/Scratch/capsRestart.cpc written by ocsmSave (v1.21)
 
 # Constant, Design, and Output Parameters:
-despmtr   Length       1.00000
-despmtr   Width       1.00000
+despmtr   plateLength       1.00000
+despmtr   plateWidth       1.00000
+despmtr   stiffHeight       0.05000
+cfgpmtr   nx       2.00000
+cfgpmtr   ny       8.00000
+cfgpmtr   nstiff       4.00000
+cfgpmtr   edgeNumbers     246.00000
 
 # Global Attributes:
 
 # Branches:
-set       L Length
-set       W Width
+set       nx2 nx*(nstiff+1)
+set       Lx plateLength/nx2
+set       Ly plateWidth/ny
+set       dxStiff plateLength/(nstiff+1)
 mark
-skbeg     0   0   0   0
-   linseg    L/2   0   0
-skend     0
-extrude   0   W   0
-select    face
-attribute capsGroup   $leftPlate
+patbeg    ix   nx2
+   patbeg    iy   ny
+      set       plateInd ix+nx2*(iy-1)
+      skbeg     (ix-1)*Lx   (iy-1)*Ly   0   0
+         linseg    ix*Lx   (iy-1)*Ly   0
+      skend     0
+      extrude   0   Ly   0
+      select    face
+attribute capsGroup   !$plate+plateInd
 attribute capsLoad   $plate
-select    edge   1
-attribute capsConstraint   $edge
-skbeg     L/2   0   0   0
-   linseg    L   0   0
-skend     0
-extrude   0   W   0
-select    face
-attribute capsGroup   $rightPlate
-attribute capsLoad   $plate
+   patend
+patend
 join     0    1
+store     plate   0   0
+patbeg    istiff   nstiff
+   mark
+   patbeg    iy   ny
+      set       stiffInd istiff+nstiff*(iy-1)
+      skbeg     istiff*dxStiff   (iy-1)*Ly   0   0
+         linseg    istiff*dxStiff   iy*Ly   0
+      skend     0
+      extrude   0   0   -stiffHeight
+      select    face
+attribute capsGroup   !$stiffener+stiffInd
+attribute capsLoad   $stiffener
+   patend
+   join     0    1
+   restore   plate   0
+   join     0    0
+   store     plate   0   0
+patend
+restore   plate   0
 select    body
 attribute capsAIM   $egadsTessAIM;tacsAIM
+patbeg    edgeInd   10
+   select    edge   !edgeNumbers[1,edgeInd]
+attribute capsConstraint   $edge
+   select    edge   !edgeNumbers[2,edgeInd]
+attribute capsConstraint   $edge
+patend
 
 end

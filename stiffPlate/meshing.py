@@ -20,7 +20,7 @@ import pyCAPS
 
 ####################################################################
 
-filename = "panel2"
+filename = "stiffPanel3"
 csmFile = os.path.join("./CSM",filename + ".csm")
 
 myProblem = pyCAPS.Problem('myCAPS', capsFile=csmFile, outLevel=0)
@@ -62,9 +62,14 @@ shell  = {"propertyType" : "Shell",
           "bendingInertiaRatio" : 1.0, # Default
           "shearMembraneRatio"  : 5.0/6.0} # Default
 #need to add the strength here
-        
-tacsAnalysis.input.Property = {"leftPlate": shell,
-                               "rightPlate": shell}
+
+propertyDict = {}
+for i in range(80):
+    propertyDict["plate"+str(i+1)] = shell
+for j in range(32):
+    propertyDict["stiffener"+str(j+1)] = shell
+tacsAnalysis.input.Property = propertyDict
+
 # Set constraints
 constraint = {"groupName" : "edge",
               "dofConstraint" : 123456}
@@ -79,8 +84,9 @@ load = {"groupName" : "plate",
 # Set loads
 tacsAnalysis.input.Load = {"appliedPressure": load }
 
-tacsAnalysis.input.Design_Variable = {"Length" : {},
-                              "Width"  : {}}
+tacsAnalysis.input.Design_Variable = {"plateLength" : {},
+                              "plateWidth"  : {},
+                              "stiffHeight" : {}}
 
 tacsAnalysis.preAnalysis()
 

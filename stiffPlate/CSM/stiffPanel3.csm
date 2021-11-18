@@ -2,9 +2,14 @@
 despmtr   plateLength       1.0
 despmtr   plateWidth        1.0
 despmtr stiffHeight         0.05
-despmtr nx 1
-despmtr ny 8
-despmtr nstiff 4
+
+cfgpmtr nx 2
+cfgpmtr ny 8
+cfgpmtr nstiff 4
+
+dimension edgeNumbers 2 10
+cfgpmtr edgeNumbers "246;229;212;205;161;154;110;103;59;52;\
+                     232;215;189;191;138;140;87;89;28;31"
 
 
 set nx2 nx*(nstiff+1)
@@ -25,9 +30,6 @@ patbeg ix nx2
         select face
         attribute capsGroup !$plate+plateInd
         attribute capsLoad $plate
-        
-        select edge 2
-            attribute capsConstraint $edge
     patend
 patend
 join 0 1
@@ -43,7 +45,7 @@ patbeg istiff nstiff
         extrude 0 0 -stiffHeight
         select face
          attribute capsGroup !$stiffener+stiffInd
-         attribute capsLoad $stiifener
+         attribute capsLoad $stiffener
     patend
     join 0 1
     restore plate
@@ -54,11 +56,9 @@ restore plate
    
 select body
    attribute capsAIM $egadsTessAIM;tacsAIM
-
-#select body
-#attribute capsAIM $egadsTessAIM;tacsAIM
-#attribute capsGroup $stiffener
-#attribute capsLoad $stiffener
-
-#select body
-#attribute capsAIM $egadsTessAIM;tacsAIM
+patbeg edgeInd 10
+   select edge !edgeNumbers[1,edgeInd]
+   	   attribute capsConstraint $edge
+   select edge !edgeNumbers[2,edgeInd]
+       attribute capsConstraint $edge
+patend

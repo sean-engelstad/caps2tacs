@@ -1,3 +1,8 @@
-2 0
-Length
-Width
+7 0
+plateLength
+plateWidth
+stiffHeight
+nx
+ny
+nstiff
+edgeNumbers

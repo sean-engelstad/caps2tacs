@@ -9,17 +9,18 @@ skbeg 0 0 0
 skend 0
 extrude 0 W 0
 select face
-    attribute capsGroup !$plate+1+$
+    attribute capsGroup !$plate+1
     attribute capsLoad $plate
-select edge 1
-    attribute capsConstraint $edge
+select edge
 
 skbeg L/2 0 0
     linseg L 0 0
 skend 0
 extrude 0 W 0
+select edge
+   attribute capsConstraint $edge
 select face
-    attribute capsGroup $rightPlate
+    attribute capsGroup !$plate+2
     attribute capsLoad $plate
 join 0 1
 select body
