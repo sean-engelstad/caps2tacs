@@ -24,11 +24,12 @@ patbeg ix nx2
         select face
         attribute capsGroup $plate
         attribute capsLoad $plate
+        
+        select edge 2
+        attribute capsConstraint $edge
     patend
 patend
 join 0 1
-select edge 1
-attribute capsConstraint $edge
 store plate
    
 patbeg istiff nstiff
@@ -45,7 +46,12 @@ patbeg istiff nstiff
     store plate
 patend
 restore plate
-
+   
+select body
+   attribute capsAIM $egadsTessAIM;tacsAIM
+select face
+   attribute capsGroup $plate
+   attribute capsLoad $plate
 #select body
 #attribute capsAIM $egadsTessAIM;tacsAIM
 #attribute capsGroup $stiffener

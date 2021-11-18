@@ -80,11 +80,10 @@ class TestTACS(unittest.TestCase):
                   "bendingInertiaRatio" : 1.0, # Default
                   "shearMembraneRatio"  : 5.0/6.0} # Default
 
-        tacs.input.Property = {"plate": shell,
-                               "stiffener": shell}
+        tacs.input.Property = {"plate": shell}
 
         # Set constraints
-        constraint = {"groupName" : "plateEdge",
+        constraint = {"groupName" : "edge",
                       "dofConstraint" : 123456}
 
         tacs.input.Constraint = {"edgeConstraint": constraint}
