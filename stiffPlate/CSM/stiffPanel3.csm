@@ -16,14 +16,15 @@ set dxStiff plateLength/(nstiff+1)
 mark
 patbeg ix nx2
     patbeg iy ny
+        set plateInd ix+nx2*(iy-1)
         skbeg (ix-1)*Lx (iy-1)*Ly 0
             linseg ix*Lx (iy-1)*Ly 0
         skend 0
         extrude 0 Ly 0
         
         select face
-        attribute capsGroup $plate+val2str(ix+nx2*(iy-1))
-            attribute capsLoad $plate
+        attribute capsGroup !$plate+plateInd
+        attribute capsLoad $plate
         
         select edge 2
             attribute capsConstraint $edge
@@ -35,12 +36,13 @@ store plate
 patbeg istiff nstiff
     mark
     patbeg iy ny
+        set stiffInd istiff+nstiff*(iy-1)
         skbeg istiff*dxStiff (iy-1)*Ly 0
             linseg istiff*dxStiff iy*Ly 0
         skend 0
         extrude 0 0 -stiffHeight
         select face
-         attribute capsGroup $stiffener+val2str(istiff+nstiff*(iy-1))
+         attribute capsGroup !$stiffener+stiffInd
          attribute capsLoad $stiifener
     patend
     join 0 1

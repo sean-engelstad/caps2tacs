@@ -1,0 +1,32 @@
+#TACS AIM overall d(func)/d(desvar) gradients
+
+
+
+#FD changing plate length
+#func([1,1,1])
+{'load_set_001_ks_vmfailure': 0.023025850929940455, 'load_set_001_wing_mass': 84.00000000000803}
+#func([1+h,1,1]); h = 1.0e-5
+{'load_set_001_ks_vmfailure': 0.023025870929920457, 'load_set_001_wing_mass': 84.00016800000802}
+#func([1+h,1,1]); h = 1.0e-3
+{'load_set_001_ks_vmfailure': 0.023027850729967103, 'load_set_001_wing_mass': 84.0168000000086}
+#func([1.1,1,1])
+{'load_set_001_ks_vmfailure': 0.02322387720290227, 'load_set_001_wing_mass': 85.68000000000838}
+
+#FD changing plate width
+#func([1,1,1])
+{'load_set_001_ks_vmfailure': 0.023025850929940455, 'load_set_001_wing_mass': 84.00000000000803}
+#func([1,1+h,1]); h = 1.0e-5
+{'load_set_001_ks_vmfailure': 0.02302595092944043, 'load_set_001_wing_mass': 84.0008400000077}
+
+
+####exact obj gradients####
+{'load_set_001_ks_vmfailure': {'plateLength': 0.0005000000003146545, 'plateWidth': 0.00411718750315577, 'stiffHeight': -5.4166779685891e-26}, 
+'load_set_001_wing_mass': {'plateLength': 4.200000002643103, 'plateWidth': 34.58437502650846, 'stiffHeight': -4.550023360310443e-22}}
+
+####finite diff gradients####
+{'load_set_001_ks_vmfailure': {'plateLength': 0.0019999980001988993, 'plateWidth': 0.009999949997577251, 'stiffHeight': }, 
+'load_set_001_wing_mass': {'plateLength': 16.799999999999997, 'plateWidth': 83.99999996697716, 'stiffHeight': }}
+
+####ratio of gradients (FD/exact)####
+{'load_set_001_ks_vmfailure': {'plateLength': 3.9999959978805655, 'plateWidth': 2.428830358081195, 'stiffHeight': }, 
+'load_set_001_wing_mass': {'plateLength': 3.9999999974827585, 'plateWidth': 2.428842501927309, 'stiffHeight': }}
