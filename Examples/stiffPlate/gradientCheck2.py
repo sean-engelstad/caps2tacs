@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Created on Thu Nov 18 14:21:31 2021
+
+@author: sengelstad6
+"""
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
 Created on Thu Nov 11 15:11:54 2021
 
 @author: sengelstad6
@@ -41,8 +49,8 @@ class CAPS2TACS:
         #geom.view()
         #myProblem.geometry.view()
         
-        self.egads.input.Edge_Point_Min = 4
-        self.egads.input.Edge_Point_Max = 6
+        self.egads.input.Edge_Point_Min = 15
+        self.egads.input.Edge_Point_Max = 20
         
         self.egads.input.Mesh_Elements = "Quad"
         
@@ -88,11 +96,7 @@ class CAPS2TACS:
         self.tacs.input.Load = {"appliedPressure": load }
         
         self.tacs.input.Design_Variable = {"plateLength" : {},
-                                      "plateWidth"  : {},
-                                      "stiffHeight" : {},
-                                      "nx"          : {},
-                                      "ny"          : {},
-                                      "nstiff"      : {}}
+                                      "plateWidth"  : {}}
     @classmethod
     def printSens(self):
         self.tacs.preAnalysis()
@@ -219,6 +223,6 @@ class CAPS2TACS:
         return ratioGrad
     
 ##### MAIN #######
-myprob = CAPS2TACS("stiffPanel3.csm")
-x = [1.0,1.0,0.05,1,8,4]
+myprob = CAPS2TACS("panel.csm")
+x = [1.0,0.4]
 myprob.compareGrad(x)

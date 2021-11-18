@@ -341,10 +341,8 @@ SPC1           1  123456      64
 MAT1           1 7.2E+10            0.33   2800.      0.      0.      0.+0      
 +0         2.E+8      0.      0.
 PSHELL         1       1   6.E-3       1      1.       10.833333
-PSHELL         2       1   6.E-3       1      1.       10.833333
 DESVAR         1plateLen      0.      0.      0.      0.
 DESVAR         2plateWid      0.      0.      0.      0.
-DESVAR         3stiffHei      0.      0.      0.      0.
 
 INCLUDE 'nastran_CAPS.bdf'
 
