@@ -1,0 +1,26 @@
+despmtr   Length       1.0
+despmtr   Width        1.0
+
+set L Length
+set W Width
+mark
+skbeg 0 0 0
+    linseg L/2 0 0
+skend 0
+extrude 0 W 0
+select face
+    attribute capsGroup $leftPlate
+    attribute capsLoad $plate
+select edge 1
+    attribute capsConstraint $edge
+
+skbeg L/2 0 0
+    linseg L 0 0
+skend 0
+extrude 0 W 0
+select face
+    attribute capsGroup $rightPlate
+    attribute capsLoad $plate
+join 0 1
+select body
+    attribute capsAIM $egadsTessAIM;tacsAIM
