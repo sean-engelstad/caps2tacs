@@ -22,11 +22,11 @@ patbeg ix nx2
         extrude 0 Ly 0
         
         select face
-        attribute capsGroup $plate
-        attribute capsLoad $plate
+            attribute capsGroup $plate
+            attribute capsLoad $plate
         
         select edge 2
-        attribute capsConstraint $edge
+            attribute capsConstraint $edge
     patend
 patend
 join 0 1

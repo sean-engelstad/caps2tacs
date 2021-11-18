@@ -1,0 +1,54 @@
+# autosave.csm written by ocsmSave (v1.21)
+
+# Constant, Design, and Output Parameters:
+despmtr   plateLength       1.00000
+despmtr   plateWidth       1.00000
+despmtr   stiffHeight       0.05000
+despmtr   nx       4.00000
+despmtr   ny       8.00000
+despmtr   nstiff       4.00000
+
+# Global Attributes:
+
+# Branches:
+set       nx2 nx*(nstiff+1)
+set       Lx plateLength/nx2
+set       Ly plateWidth/ny
+set       dxStiff plateLength/(nstiff+1)
+mark
+patbeg    ix   nx2
+   patbeg    iy   ny
+      skbeg     (ix-1)*Lx   (iy-1)*Ly   0   0
+         linseg    ix*Lx   (iy-1)*Ly   0
+      skend     0
+      extrude   0   Ly   0
+      select    face
+attribute capsGroup   $plate
+attribute capsLoad   $plate
+      select    edge   2
+attribute capsConstraint   $edge
+   patend
+patend
+join     0    1
+store     plate   0   0
+patbeg    istiff   nstiff
+   mark
+   patbeg    iy   ny
+      skbeg     istiff*dxStiff   (iy-1)*Ly   0   0
+         linseg    istiff*dxStiff   iy*Ly   0
+      skend     0
+      extrude   0   0   -stiffHeight
+   patend
+   join     0    1
+   restore   plate   0
+   join     0    0
+   store     plate   0   0
+patend
+restore   plate   0
+select    body
+attribute capsAIM   $egadsTessAIM;tacsAIM
+select    face
+attribute capsGroup   $plate
+attribute capsLoad   $plate
+
+end
