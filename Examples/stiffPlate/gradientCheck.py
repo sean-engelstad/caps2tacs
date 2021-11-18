@@ -20,11 +20,9 @@ class CAPS2TACS:
     @classmethod
     def __init__(self,csmFile):
         self.csmFile = csmFile
-        
-        filename = os.path.join("stiffPanel2.csm")
 
         #mkdir(self.problemName + str(self.iProb))
-        self.myProblem = pyCAPS.Problem('myCAPS', capsFile=filename, outLevel=0)
+        self.myProblem = pyCAPS.Problem('myCAPS', capsFile=csmFile, outLevel=0)
         
         self.geom = self.myProblem.geometry
         self.deskeys = self.geom.despmtr.keys()
@@ -33,12 +31,8 @@ class CAPS2TACS:
         
         self.tacs = self.myProblem.analysis.create(aim = "tacsAIM",
                                          name = "tacs")
-        self.debug = False
     @classmethod
-    def cleanup(self):
-        return
-    @classmethod
-    def generateMesh(self,x):
+    def updateMesh(self,x):
         ind = 0
         for key in self.deskeys:
             self.geom.despmtr[key].value = x[ind]
@@ -98,11 +92,9 @@ class CAPS2TACS:
         self.tacs.input.Design_Variable = {"plateLength" : {},
                                       "plateWidth"  : {},
                                       "stiffHeight" : {}}
-        
-        # Run Small format
-        self.tacs.preAnalysis()
     @classmethod
     def printSens(self):
+        self.tacs.preAnalysis()
         structOptions = {'writeSolution': True, }
         
         datFile = os.path.join(self.tacs.analysisDir, self.tacs.input.Proj_Name + '.dat')
@@ -158,11 +150,13 @@ class CAPS2TACS:
                 f.write("{}\n".format(funcs[key]))
                 for nodeind in range(self.NumberOfNode): # d(Func1)/d(xyz)
                     f.write("{} {} {}\n".format(cSens[nodeind,0], cSens[nodeind,1], cSens[nodeind,2]))
-    @classmethod
-    def exactGrad(self,x):
-        self.generateMesh(x)
-        self.printSens()
+                    
         self.tacs.postAnalysis()
+        
+    @classmethod
+    def gradient(self,x):
+        self.updateMesh(x)
+        self.printSens()
         
         desKeys = self.tacs.input.Design_Variable.keys()
         sens = {}
@@ -172,18 +166,10 @@ class CAPS2TACS:
                 sens[key][desKey] = self.tacs.dynout[key].deriv(desKey)
         self.sens = sens
         return sens
-    
     @classmethod
     def func(self,x):
-        self.generateMesh(x)
-        
+        self.updateMesh(x)
         self.printSens()
-        
-        time.sleep(5)
-        print('have slept')
-        #self.geom.view()
-        
-        self.tacs.postAnalysis()
         
         func = {}
         for key in self.funcKeys:
@@ -191,11 +177,11 @@ class CAPS2TACS:
         return func
     @classmethod
     def finiteDiff(self,x):
-        self.genBDF(x) #use this to get desvar names
-        sampleFunc = self.computeFunc(x) #use this to get func names
+        self.updateMesh(x)
+        self.printSens()
         h = 1.0e-5
         fdSens = {}
-        for funcKey in sampleFunc.keys():
+        for funcKey in self.funcKeys:
             fdSens[funcKey] = {}
             vind = 0
             for desvarKey in self.deskeys:
@@ -210,9 +196,10 @@ class CAPS2TACS:
         return fdSens
     def compareGrad(self,x):
         return
+    
+##### MAIN #######
 myprob = CAPS2TACS("stiffPanel2.csm")
 #print(myprob.exactGrad([1.0,1.0,1.0]))
 h = 1.0e-5
 print(myprob.func([1.0 ,1.0,1.0]))
-myprob.debug = True
 print(myprob.func([1.0 ,1.0 + h,1.0]))
