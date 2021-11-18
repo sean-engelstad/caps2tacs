@@ -14,8 +14,6 @@ from tacs.pytacs import pyTACS
 
 from tacs import functions
 
-import time
-
 class CAPS2TACS:
     @classmethod
     def __init__(self,csmFile):

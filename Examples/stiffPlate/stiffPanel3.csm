@@ -1,0 +1,55 @@
+# Design Parameters
+despmtr   plateLength       1.0
+despmtr   plateWidth        1.0
+despmtr stiffHeight         0.05
+despmtr nx 1
+despmtr ny 8
+despmtr nstiff 4
+
+
+set nx2 nx*(nstiff+1)
+set Lx plateLength/nx2
+set Ly plateWidth/ny
+set dxStiff plateLength/(nstiff+1)
+
+# plate segments
+mark
+patbeg ix nx2
+    patbeg iy ny
+        skbeg (ix-1)*Lx (iy-1)*Ly 0
+            linseg ix*Lx (iy-1)*Ly 0
+        skend 0
+        extrude 0 Ly 0
+        
+        select face
+        attribute capsGroup $plate
+        attribute capsLoad $plate
+    patend
+patend
+join 0 1
+select edge 1
+attribute capsConstraint $edge
+store plate
+   
+patbeg istiff nstiff
+    mark
+    patbeg iy ny
+        skbeg istiff*dxStiff (iy-1)*Ly 0
+            linseg istiff*dxStiff iy*Ly 0
+        skend 0
+        extrude 0 0 -stiffHeight
+    patend
+    join 0 1
+    restore plate
+    join
+    store plate
+patend
+restore plate
+
+#select body
+#attribute capsAIM $egadsTessAIM;tacsAIM
+#attribute capsGroup $stiffener
+#attribute capsLoad $stiffener
+
+#select body
+#attribute capsAIM $egadsTessAIM;tacsAIM
