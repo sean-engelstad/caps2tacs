@@ -62,3 +62,13 @@ patbeg edgeInd 10
    select edge !edgeNumbers[2,edgeInd]
        attribute capsConstraint $edge
 patend
+
+#translation x y z
+translate 0.0 0.0 0.0
+   
+#xrotation deg, yc,zc
+rotatex 0.0 0.0 0.0
+#yrotation deg, zc,xc
+rotatey 0.0 0.0 0.0
+#xrotation deg, xc,yc
+rotatez 0.0 0.0 0.0
