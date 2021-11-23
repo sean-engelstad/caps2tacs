@@ -1,0 +1,77 @@
+#csm file for Rohan
+# Design Parameters
+despmtr   plateLength       2.0
+despmtr   plateWidth        3.0
+despmtr stiffHeight         0.1
+
+cfgpmtr nx 2
+cfgpmtr ny 8
+cfgpmtr nstiff 4
+
+dimension edgeNumbers1 1 10
+cfgpmtr edgeNumbers1 "246;229;212;205;161;154;110;103;59;52"
+dimension edgeNumbers2 1 10
+cfgpmtr edgeNumbers2 "232;215;189;191;138;140;87;89;28;31"
+
+
+set nx2 nx*(nstiff+1)
+set Lx plateLength/nx2
+set Ly plateWidth/ny
+set dxStiff plateLength/(nstiff+1)
+
+# plate segments
+mark
+patbeg ix nx2
+    patbeg iy ny
+        set plateInd ix+nx2*(iy-1)
+        skbeg (ix-1)*Lx (iy-1)*Ly 0
+            linseg ix*Lx (iy-1)*Ly 0
+        skend 0
+        extrude 0 Ly 0
+        
+        select face
+        attribute capsGroup !$plate+plateInd
+    patend
+patend
+join 0 1
+store plate
+   
+patbeg istiff nstiff
+    mark
+    patbeg iy ny
+        set stiffInd istiff+nstiff*(iy-1)
+        skbeg istiff*dxStiff (iy-1)*Ly 0
+            linseg istiff*dxStiff iy*Ly 0
+        skend 0
+        extrude 0 0 -stiffHeight
+        select face
+         attribute capsGroup !$stiffener+stiffInd
+    patend
+    join 0 1
+    restore plate
+    join
+    store plate
+patend
+restore plate
+   
+select body
+   attribute capsAIM $egadsTessAIM;tacsAIM
+patbeg edgeInd 10
+   select edge !edgeNumbers1[1,edgeInd]
+   	   attribute capsConstraint $edge1
+   	   attribute capsLoad $edge1
+patend
+patbeg edgeInd 10
+   select edge !edgeNumbers2[1,edgeInd]
+       attribute capsConstraint $edge2
+patend
+
+#translation x y z
+translate 0.0 0.0 0.0
+   
+#xrotation deg, yc,zc
+rotatex 90.0 0.0 0.0
+#yrotation deg, zc,xc
+rotatey 0.0 0.0 0.0
+#xrotation deg, xc,yc
+rotatez 0.0 0.0 0.0

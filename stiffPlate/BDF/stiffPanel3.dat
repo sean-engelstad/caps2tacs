@@ -20916,6 +20916,6 @@ DESVAR         1plateLen      0.      0.      0.      0.
 DESVAR         2plateWid      0.      0.      0.      0.
 DESVAR         3stiffHei      0.      0.      0.      0.
 
-INCLUDE 'stiffPanel3.bdf'
+INCLUDE 'nastran_CAPS.bdf'
 
 ENDDATA

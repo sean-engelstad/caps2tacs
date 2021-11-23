@@ -20,7 +20,7 @@ import pyCAPS
 
 ####################################################################
 
-filename = "stiffPanel3"
+filename = "stiffPanel4"
 csmFile = os.path.join("./CSM",filename + ".csm")
 
 myProblem = pyCAPS.Problem('myCAPS', capsFile=csmFile, outLevel=0)
@@ -71,15 +71,22 @@ for j in range(32):
 tacsAnalysis.input.Property = propertyDict
 
 # Set constraints
-constraint = {"groupName" : "edge",
-              "dofConstraint" : 123456}
+roller = {"groupName" : "edge1",
+              "dofConstraint" : 12}
+pin = {"groupName" : "edge2",
+              "dofConstraint" : 123}
         
-tacsAnalysis.input.Constraint = {"edgeConstraint": constraint}
+tacsAnalysis.input.Constraint = {"roller": roller,
+                                 "pin": pin}
 
-# Set load
-load = {"groupName" : "plate",
-        "loadType" : "Pressure",
-        "pressureForce" : 2.e6}
+# Set load, specifying total load, not line load here
+loadValue = 20
+numNodesOnEdge = 161
+loadPerNode = loadValue / numNodesOnEdge
+load = {"groupName"         : "edge1",
+        "loadType"             : "GridForce",
+        "forceScaleFactor"     : loadPerNode,
+        "directionVector"     : [0.0, 0.0, 1.0]}
         
 # Set loads
 tacsAnalysis.input.Load = {"appliedPressure": load }
@@ -89,6 +96,8 @@ tacsAnalysis.input.Design_Variable = {"plateLength" : {},
                               "stiffHeight" : {}}
 
 tacsAnalysis.preAnalysis()
+
+#tacsAnalysis.geometry.view()
 
 homeDir = os.getcwd()
 csmDir = os.path.join(homeDir,"BDF")
