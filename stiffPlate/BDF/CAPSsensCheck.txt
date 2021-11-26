@@ -1,0 +1,58 @@
+Plate Coordinates of panel.csm1.bdf
+Node  x    y     z
+10  0.0    0.225 0.0
+19  0.125  0.4   0.0
+28  0.6875 0.4   0.0
+39  1.0    0.25  0.0
+68  0.125  0.20  0.0
+
+Plate with length=1.0 (x-dir), width=0.4 (y-dir)
+linseg for length, extrude for width
+
+CAPS tess sensitivity output:
+Node  dx/dL  dy/dL  dz/dL  dx/dW  dy/dW  dz/dW
+10    0.0    0.0    0.0    0.0    1.125  0.0
+19    0.125  0.0    0.0    0.0    2.0    0.0
+28    0.6875 0.0    0.0    0.0    2.0    0.0
+39    1.00   0.0    0.0    0.0    1.25   0.0
+68    0.125  0.0    0.0    0.0    1.00   0.0
+
+Correct tess sensitivity (what I think):
+Equations: dx/dL = x/xmax=x/1.0, dy/dW = y/ymax=y/0.4
+Node  dx/dL  dy/dL  dz/dL  dx/dW  dy/dW  dz/dW
+10    0.0    0.0    0.0    0.0    0.563  0.0
+19    0.125  0.0    0.0    0.0    1.0    0.0
+28    0.6875 0.0    0.0    0.0    1.0    0.0
+39    1.00   0.0    0.0    0.0    0.625  0.0
+68    0.125  0.0    0.0    0.0    0.5    0.0
+
+*Result: dy/dW seems to be off by factor of 2
+
+
+##################################################
+CHECK #2:
+Plate with Length=0.5, width=1.0
+
+Node  x    y     z
+10  0.0    0.5625 0.0
+19  0.0625  2.0   0.0
+28  0.34375 1.0   0.0
+39  0.5    0.625  0.0
+68  0.0625  0.5  0.0
+
+CAPS tess sensitivity output:
+Node  dx/dL  dy/dL  dz/dL  dx/dW  dy/dW  dz/dW
+10    0.0    0.0    0.0    0.0    1.125  0.0
+19    0.125  0.0    0.0    0.0    2.0    0.0
+28    0.6875 0.0    0.0    0.0    2.0    0.0
+39    1.00   0.0    0.0    0.0    1.25   0.0
+68    0.125  0.0    0.0    0.0    1.00   0.0
+
+Correct tess sensitivity (what I think):
+Equations: dx/dL = x/xmax=x/1.0, dy/dW = y/ymax=y/0.4
+Node  dx/dL  dy/dL  dz/dL  dx/dW  dy/dW  dz/dW
+10    0.0    0.0    0.0    0.0    0.563  0.0
+19    0.125  0.0    0.0    0.0    1.0    0.0
+28    0.6875 0.0    0.0    0.0    1.0    0.0
+39    1.00   0.0    0.0    0.0    0.625  0.0
+68    0.125  0.0    0.0    0.0    0.5    0.0
