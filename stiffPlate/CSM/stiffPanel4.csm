@@ -4,7 +4,7 @@ despmtr   plateLength       2.0
 despmtr   plateWidth        3.0
 despmtr stiffHeight         0.1
 
-cfgpmtr nx 2
+cfgpmtr nx 1
 cfgpmtr ny 8
 cfgpmtr nstiff 4
 
@@ -30,7 +30,7 @@ patbeg ix nx2
         extrude 0 Ly 0
         
         select face
-        attribute capsGroup !$plate+plateInd
+        attribute capsGroup !$plate+iy
     patend
 patend
 join 0 1

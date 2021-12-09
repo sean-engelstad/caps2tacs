@@ -6,14 +6,6 @@ Created on Thu Nov 18 14:21:31 2021
 @author: sengelstad6
 """
 
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Nov 11 15:11:54 2021
-
-@author: sengelstad6
-"""
-
 import os, shutil
 
 import pyCAPS
@@ -26,9 +18,11 @@ from tacs import functions
 
 import numpy as np
 
+from paropt import ParOpt
 
-class tacsaim:
-    @classmethod
+from mpi4py import MPI
+
+class TacsAim(ParOpt.Problem):
     def __init__(self,csmFile,debug=False):
         self.csmFile = csmFile
         
@@ -41,13 +35,20 @@ class tacsaim:
         
         self.geom = self.myProblem.geometry
         self.deskeys = self.geom.despmtr.keys()
-        print(self.deskeys)
+        #print(self.deskeys)
         
         self.egads = self.myProblem.analysis.create(aim="egadsTessAIM")
         
         self.tacs = self.myProblem.analysis.create(aim = "tacsAIM",
                                          name = "tacs")
-    @classmethod
+        self.ct = 0
+        
+        # Set up the topology optimization problem
+        self.nvar = 2 #num desvar
+        nelems = 256
+        ncon = 1
+        nblock = 1
+        super(TacsAim, self).__init__(MPI.COMM_SELF, self.nvar, 1, nblock)
     def updateMesh(self,x):
         x = np.array(x)
         #print(x)
@@ -100,17 +101,19 @@ class tacsaim:
         
         self.tacs.input.Constraint = {"edgeConstraint": constraint}
         
+        loadval = 1e7
+        loadpernode = loadval / self.NumberOfNode 
+        
         # Set load
         load = {"groupName" : "plate",
                 "loadType" : "Pressure",
-                "pressureForce" : 2.e6}
+                "pressureForce" : loadpernode}
         
         # Set loads
         self.tacs.input.Load = {"appliedPressure": load }
         
         self.tacs.input.Design_Variable = {"plateLength" : {},
                                            "plateWidth" : {}}
-    @classmethod
     def printSens(self,debugInd=-1):
         self.tacs.preAnalysis()
         structOptions = {'writeSolution': True, }
@@ -153,7 +156,7 @@ class tacsaim:
             coords_nastran = np.zeros((nnodes,3))
             globalNodes = np.linspace(1.0,nnodes,nnodes)
             tacsNodeMap = FEASolver.meshLoader.getLocalNodeIDsFromGlobal(globalNodes,nastranOrdering=True)
-            print(tacsNodeMap)
+            #print(tacsNodeMap)
             
             #print("dfdX shape: ",dfdX.shape)
             dfdX = dfdX.reshape((nnodes,3))
@@ -175,7 +178,7 @@ class tacsaim:
             #put back into funcSens dict
             funcsSens[key]['Xpts'] = dfdX_bdf
             
-        printNodes = True
+        printNodes = False
         filename = os.path.join(self.tacs.analysisDir, self.tacs.input.Proj_Name+".sens")
         with open(filename, "w") as f:
             f.write("{} {}\n".format(nfunc,self.NumberOfNode))
@@ -198,7 +201,6 @@ class tacsaim:
                 f.write("{} {} {}\n".format(coords[nodeind,0], coords[nodeind,1], coords[nodeind,2]))
                     
         self.tacs.postAnalysis()
-    @classmethod
     def dict2vec(self,dictionary):
         keys = dictionary.keys()
         vector = np.zeros((len(keys)))
@@ -207,7 +209,6 @@ class tacsaim:
             vector[index] = dictionary[key]
             index += 1
         return vector
-    @classmethod
     def dict2matrix(self,dictionary):
         keys1 = list(dictionary.keys())
         keys2 = dictionary[keys1[0]].keys()
@@ -221,7 +222,6 @@ class tacsaim:
                 col += 1
             row += 1
         return matrix
-    @classmethod
     def gradient(self,x):
         self.updateMesh(x)
         if (self.debug):
@@ -241,17 +241,14 @@ class tacsaim:
                 sens[key][desKey] = self.tacs.dynout[key].deriv(desKey)
         sensMatrix = self.dict2matrix(sens)        
         return sensMatrix
-    @classmethod
     def moveBDF(self,ind):
         bdfFile = os.path.join(self.tacs.analysisDir, self.tacs.input.Proj_Name+".bdf")
         newLoc = os.path.join(os.getcwd(),"BDF",self.csmFile+str(ind)+".bdf")
         shutil.move(bdfFile,newLoc)
-    @classmethod
     def moveSens(self,ind):
         sensFile = os.path.join(self.tacs.analysisDir, self.tacs.input.Proj_Name+".sens")
         newLoc = os.path.join(os.getcwd(),"BDF",self.csmFile+str(ind)+".sens")
         shutil.move(sensFile,newLoc)
-    @classmethod
     def func(self,x):
         self.updateMesh(x)
         if (self.debug):
@@ -264,32 +261,40 @@ class tacsaim:
             func[key] = self.tacs.dynout[key].value
         funcVec = self.dict2vec(func)
         return funcVec
-    @classmethod
-    def func2(self,filename):
-        self.printSens2(filename)
+    def mass(self, x):
+        return self.func(x)[0]
+    def vm_stress(self, x):
+        return self.func(x)[1]/1e-7
+    def mass_grad(self, x):
+        grad = self.gradient(x)
+        return grad[0,:]
+    def vm_stress_grad(self, x):
+        grad = self.gradient(x)/1e-7
+        return grad[1,:]
+    def checkGradients(self, x=None, function=None, gradient=None, h=1e-4):
+        if (function is None):
+            function = self.func
+        if (gradient is None):
+            gradient = self.gradient
+        if (x is None):
+            x = np.ones(2)
+            #x = np.ones((self.nvar))
         
-        func = {}
-        for key in self.funcKeys:
-            func[key] = self.tacs.dynout[key].value
-        funcVec = self.dict2vec(func)
-        return funcVec
-    @classmethod
-    def finiteDifference(self, x, function, gradient, h=1e-4):
         x = np.array(x)        
         p = np.random.uniform(size=x.shape)
         p = p / np.linalg.norm(p)
         
-        print(p)
+        #print(p)
         
         func1 = function(x-p*h)
         func2 = function(x+p*h)
         
         fdGrad = (func2-func1)/2/h
         mygrad = gradient(x)
-        print(mygrad,p)
+        #print(mygrad,p)
         directDeriv = np.matmul(mygrad, p)
         
-        print("Functions: ",func1,func2)
+        #print("Functions: ",func1,func2)
         
         print('Finite Difference Gradient')
         print(fdGrad)
@@ -300,42 +305,70 @@ class tacsaim:
         print('Gradient Error')
         print(error)
         return abs(error) #error vector for each function
-    @classmethod
-    def finiteDiffPlot(self,x):
-        orderOfMag = -1*np.linspace(1.0,8.0,30)
-        stepSizes = 10**(orderOfMag)
-        errors = np.zeros((30))
-        
-        for i in range(len(stepSizes)):
-            h = stepSizes[i]
-            cError = self.finiteDifference(x,tacsaim.func, tacsaim.gradient, h)
-            errors[i] = cError[1]
-        fig, ax = plt.subplots()
-        ax.loglog(stepSizes,errors,'k-',linewidth=3)
-        ax.set_xlabel('Step Size h')
-        ax.set_ylabel('FD Error in Mass')
-        plt.show()
-    @classmethod
-    def bdfChange(self,run):
-        h = 1.0e-5
-        L = 0.5; W = 1.0
-        if (run == 1):
-            x = np.array( [L,W] )
-            myprob.func(x)
-        elif (run == 2): 
-            x = np.array( [L+h,W] )
-            myprob.func(x)
-        myprob.moveBDF(run)
-        myprob.moveSens(run)
-    @classmethod
-    def checkTACSgradient(self):
-        print("case 1: ",self.func2("panel.csm1"))
-        print("case 2: ",self.func2("panel.csm2"))
+    def getVarsAndBounds(self, x, lb, ub):
+        """Get the variable values and bounds"""
+        lb[:] = 1e-3
+        ub[:] = 3.0
+        x[:] = 0.95
         return
+
+    def evalObjCon(self, x):
+        """
+        Return the objective, constraint and fail flag
+        """
+        self.ct += 1
+        print(self.ct)
+        maxStress = 10.0
+        fail = 0
+        obj = self.mass(x[:]) #mass
+        con = [maxStress - self.vm_stress(x[:])] #vmstress
+
+        return fail, obj, con
+
+    def evalObjConGradient(self, x, g, A):
+        """
+        Return the objective, constraint and fail flag
+        """
+
+        fail = 0
+        g[:] = self.mass_grad(x[:])
+        A[0][:] = -self.vm_stress_grad(x[:])
+
+        return fail
+    
 ##### MAIN #######
-myprob = tacsaim("panel.csm",debug=False)
-#to check the sensitivities I was manually 
-#changing node and direc in gradient function
-#print(myprob.gradient([0.5,1.0]))
-myprob.finiteDiffPlot([1.0,3.0])
-#myprob.finiteDifference([1.0,0.5],tacsaim.func, tacsaim.gradient, 1e-5)
+tacsproj = TacsAim("panel.csm",debug=False)
+
+tacsproj.checkGradients()
+
+options = {
+    'algorithm': 'tr',
+    'tr_init_size': 0.05,
+    'tr_min_size': 1e-6,
+    'tr_max_size': 10.0,
+    'tr_eta': 0.25,
+    'tr_infeas_tol': 1e-6,
+    'tr_l1_tol': 1e-3,
+    'tr_linfty_tol': 0.0,
+    'tr_adaptive_gamma_update': True,
+    'tr_max_iterations': 1000,
+    'max_major_iters': 100,
+    'penalty_gamma': 1e3,
+    'qn_subspace_size': 10,
+    'qn_type': 'bfgs',
+    'abs_res_tol': 1e-8,
+    'starting_point_strategy': 'affine_step',
+    'barrier_strategy': 'mehrotra_predictor_corrector',
+    'use_line_search': False}
+
+options = {
+    'algorithm': 'mma'}
+
+# Set up the optimizer
+opt = ParOpt.Optimizer(tacsproj, options)
+
+#Set a new starting point
+opt.optimize()
+x, z, zw, zl, zu = opt.getOptimizedPoint()
+print(x[:])
+print(tacsproj.evalObjCon(x[:]))

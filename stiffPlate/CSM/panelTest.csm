@@ -1,0 +1,46 @@
+# Design Parameters
+despmtr   plateLength       1.0
+despmtr   plateWidth        1.0
+despmtr stiffHeight         0.05
+despmtr stiffSpace          0.05
+
+cfgpmtr nstiff 2
+
+set stiffx0 plateLength/2-(nstiff-1)/2*stiffSpace
+
+# plate segments
+skbeg 0 0 0
+    linseg plateLength 0 0
+skend 0
+extrude 0 plateWidth 0
+
+select face
+attribute capsGroup $plate
+attribute capsLoad $plate
+store plate
+   
+skbeg 0.4 0 0
+    linseg 0.4 1.0 0.0
+skend 0
+extrude 0 0 -0.05
+restore plate
+join
+store plate
+
+skbeg 0.6 0 0
+    linseg 0.6 1.0 0.0
+skend 0
+extrude 0 0 -0.05
+restore plate
+join
+store plate
+
+#translation x y z
+translate 0.0 0.0 0.0
+   
+#xrotation deg, yc,zc
+rotatex 0.0 0.0 0.0
+#yrotation deg, zc,xc
+rotatey 0.0 0.0 0.0
+#xrotation deg, xc,yc
+rotatez 0.0 0.0 0.0
