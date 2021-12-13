@@ -1,9 +1,0 @@
-With design parameters of a simple panel
-{'plateLength': 1.0, 'plateWidth': 0.4}
-
-Finite Difference Gradient
-{'load_set_001_ks_vmfailure': {'plateLength': 0.009999999999506931, 'plateWidth': 0.025000000005576114}, 'load_set_001_wing_mass': {'plateLength': 6.720000000370873, 'plateWidth': 16.799999999639326}}
-Chain Rule Gradient
-{'load_set_001_ks_vmfailure': {'plateLength': 0.0025000000010957837, 'plateWidth': 0.001464843751273564}, 'load_set_001_wing_mass': {'plateLength': 1.6800000007363431, 'plateWidth': 0.9843750008558178}}
-Ratio of gradients fd/ch
-{'load_set_001_ks_vmfailure': {'plateLength': 3.9999999980495184, 'plateWidth': 17.0666666556352}, 'load_set_001_wing_mass': {'plateLength': 3.9999999984675596, 'plateWidth': 17.06666665146247}}
