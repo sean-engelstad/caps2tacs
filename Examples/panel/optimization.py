@@ -118,21 +118,29 @@ class Optimization(ParOpt.Problem):
         print("Constraint Value(s): ",con)
 
 ## Optimization problem defined here ##
-        
+
+#run options: check, run
+option = "run"
+    
 myOpt = Optimization()
 
-myOpt.setBounds(maxStress=2.0,minStress=0.5)
 
-options = {
-    'algorithm': 'mma'}
-
-# Set up the optimizer
-opt = ParOpt.Optimizer(myOpt, options)
-
-#Set a new starting point
-opt.optimize()
-x, z, zw, zl, zu = opt.getOptimizedPoint()
-
-#print optimized information
-myOpt.printObjCon(x)
-myOpt.problem.printDesignVariables(x[:])
+if (option == "check"):
+    myOpt.problem.checkGradients()
+    
+elif (option == "run"):
+    myOpt.setBounds(maxStress=2.0,minStress=0.5)
+    
+    options = {
+        'algorithm': 'mma'}
+    
+    # Set up the optimizer
+    opt = ParOpt.Optimizer(myOpt, options)
+    
+    #Set a new starting point
+    opt.optimize()
+    x, z, zw, zl, zu = opt.getOptimizedPoint()
+    
+    #print optimized information
+    myOpt.printObjCon(x)
+    myOpt.problem.printDesignVariables(x[:])
