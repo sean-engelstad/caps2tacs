@@ -1,0 +1,13 @@
+12 0
+series
+nspar
+nrib
+onesolid
+area
+aspect
+taper
+twist
+lesweep
+dihedral
+faceList
+edgeList

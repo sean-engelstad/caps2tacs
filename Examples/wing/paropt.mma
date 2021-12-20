@@ -1,0 +1,5 @@
+algorithm                                mma            
+use_diag_hessian                         True           
+
+  MMA sub-iter            fobj    l1-opt linft-opt  l1-lambd    infeas
+    0        0    6.197792e+02 8.717e+01 4.104e+01 0.000e+00 9.891e+02

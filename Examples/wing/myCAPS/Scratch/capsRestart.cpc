@@ -1,0 +1,79 @@
+# /home/sengelstad6/git/caps2tacs/Examples/wing/myCAPS/Scratch/capsRestart.cpc written by ocsmSave (v1.21)
+
+# Constant, Design, and Output Parameters:
+cfgpmtr   series    8412.00000
+cfgpmtr   nspar       3.00000
+cfgpmtr   nrib       8.00000
+cfgpmtr   onesolid       1.00000
+despmtr   area      40.00000
+despmtr   aspect       6.00000
+despmtr   taper       0.50000
+despmtr   twist       5.00000
+despmtr   lesweep      30.00000
+despmtr   dihedral       5.00000
+cfgpmtr   faceList      44.00000
+cfgpmtr   edgeList      95.00000
+
+# Global Attributes:
+
+# Branches:
+set       cmean sqrt(area/aspect)
+set       span cmean*aspect
+set       sspan span/2
+set       croot 2*cmean/(1+taper)
+set       ctip croot*taper
+set       xtip sspan*tand(lesweep)
+set       ytip sspan*tand(dihedral)
+set       ybot -0.1*croot
+set       ytop +0.2*croot+ytip
+set       extend 0.02*cmean
+mark
+udprim    naca   Series   series
+scale     croot   0   0   0
+udprim    naca   Series   series
+scale     ctip   0   0   0
+rotatez   -twist   0   0
+translate xtip   ytip   -sspan
+loft      0
+attribute OML   0
+dump      OML.egads   1   0   0
+patbeg    ispar   nspar
+   set       frac ispar/(nspar+1)
+   skbeg     frac*croot   ybot   +extend   0
+      linseg    frac*ctip+xtip   ybot   -sspan-extend
+   skend     0
+   extrude   0   ytop-ybot   0
+attribute spar   ispar
+   patbeg    dum   1-onesolid
+      import    OML.egads   1
+      intersect none   1   0
+   patend
+patend
+patbeg    irib   nrib
+   set       frac (irib-1)/(nrib-1)
+   skbeg     frac*xtip-extend   ybot   -frac*sspan   0
+      linseg    croot+frac*(xtip-croot+ctip)+extend   ybot   -frac*sspan
+   skend     0
+   extrude   0   ytop-ybot   0
+attribute rib   irib
+   patbeg    dum   1-onesolid
+      import    OML.egads   1
+      intersect none   1   0
+   patend
+   patbeg    dum   onesolid
+      union     0   0   0
+      patbeg    foo   ifzero(irib-1,nspar-1,0)
+         union     0   0   0
+      patend
+   patend
+patend
+patbeg    dum   onesolid
+   import    OML.egads   1
+   intersect none   1   0
+patend
+select    body
+attribute capsAIM   $egadsTessAIM;tacsAIM
+select    face
+attribute capsGroup   $wing
+
+end

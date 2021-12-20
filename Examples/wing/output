@@ -1,0 +1,298 @@
+WARNING:: 25 _hist and/or __trace__ attributes removed
+Mapping capsGroup attributes ................
+	Number of unique capsGroup attributes = 1
+	Name = wing, index = 1
+Mapping capsMesh attributes ................
+	Number of unique capsMesh attributes = 0
+Getting surface mesh for body 1 (of 1)
+	Tessellating body
+Number of nodes    = 13193
+Number of elements = 12593
+Number of node elements          = 0
+Number of line elements          = 0
+Number of triangle elements      = 0
+Number of quadrilateral elements = 12593
+----------------------------
+Total number of nodes    = 13193
+Total number of elements = 12593
+Mapping capsGroup attributes ................
+	Number of unique capsGroup attributes = 1
+	Name = wing, index = 1
+Mapping capsMesh attributes ................
+	Number of unique capsMesh attributes = 0
+Getting surface mesh for body 1 (of 1)
+	Tessellating body
+Number of nodes    = 13193
+Number of elements = 12593
+Number of node elements          = 0
+Number of line elements          = 0
+Number of triangle elements      = 0
+Number of quadrilateral elements = 12593
+----------------------------
+Total number of nodes    = 13193
+Total number of elements = 12593
+Mapping Csys attributes ................
+	Number of unique Csys attributes = 0
+
+Getting FEA coordinate systems.......
+	Number of coordinate systems - 0
+	No coordinate systems found - defaulting to global
+Mapping capsConstraint attributes ................
+	Number of unique capsConstraint attributes = 1
+	Name = wingRoot, index = 1
+Mapping capsLoad attributes ................
+	Number of unique capsLoad attributes = 1
+	Name = bottomWing, index = 1
+Mapping capsBound attributes ................
+	Number of unique capsBound attributes = 0
+Mapping capsConnect attributes ................
+	Number of unique capsConnect attributes = 0
+Mapping capsResponse attributes ................
+	Number of unique capsResponse attributes = 0
+Mapping capsGroup attributes ................
+	Number of unique capsGroup attributes = 1
+	Name = wing, index = 1
+Setting FEA Data
+	Mesh for body = 0
+	Number of nodal coordinates = 13193
+	Number of elements = 12593
+	Elemental Nodes = 0
+	Elemental Rods  = 0
+	Elemental Tria3 = 0
+	Elemental Quad4 = 12593
+
+Getting FEA materials.......
+	Number of materials - 1
+	Material name - madeupium
+	Done getting FEA materials
+
+Getting FEA properties.......
+	Number of properties - 1
+	Property name - wing
+	Done getting FEA properties
+Updating mesh element types based on properties input
+
+Getting FEA constraints.......
+	Number of constraints - 1
+	Constraint name - fixRoot
+	No "constraintType" specified for Constraint tuple fixRoot, defaulting to "ZeroDisplacement"
+	Done getting FEA constraints
+Support tuple is NULL - No supports applied
+Connect tuple is NULL - Using defaults
+
+Getting FEA loads.......
+	Number of loads - 1
+	Load name - lift
+	Done getting FEA loads
+
+Getting FEA design variables.......
+	Number of design variables          - 6
+	Design_Variable name - area
+	Design_Variable name - aspect
+	Design_Variable name - dihedral
+	Design_Variable name - lesweep
+	Design_Variable name - taper
+	Design_Variable name - twist
+	Number of design variable relations - 6
+	Done getting FEA design variables
+Design_Constraint tuple is NULL - No design constraints applied
+Design_Equation tuple is NULL - No design equations applied
+Design_Table tuple is NULL - No design table constants applied
+Design_Opt_Param tuple is NULL - No design optimization parameters applied
+Design_Response tuple is NULL - No design responses applied
+Design_Equation_Response tuple is NULL - No design equation responses applied
+Analysis tuple is NULL
+
+Getting FEA analyses.......
+	Number of analyses - 1
+	Analysis name - Default
+	Done getting FEA analyses
+
+Writing Nastran grid and connectivity file (in large field format) ....
+Finished writing Nastran grid file
+
+Writing subElement types (if any) - appending mesh file
+
+Writing TACS instruction file....
+	Writing analysis cards
+	Writing load ADD cards
+	Writing constraint ADD cards
+	Writing load cards
+	Writing constraint cards
+	Writing material cards
+	Writing property cards
+	Writing design variable cards
+[0] Creating TACSAssembler with numOwnedNodes = 13193 numElements = 12593
+[0] BCSRMat: ILU(1000) Input fill ratio 20.00, actual fill ratio: 4.84, nnz(ILU) = 557241
+ CAPS Info: Building sensitivity information for: area[1,1]
+WARNING:: 25 _hist and/or __trace__ attributes removed
+ CAPS Info: Sensitivity finite difference used for: area[1,1]
+ CAPS Info: Building sensitivity information for: aspect[1,1]
+WARNING:: 25 _hist and/or __trace__ attributes removed
+ CAPS Info: Sensitivity finite difference used for: aspect[1,1]
+ CAPS Info: Building sensitivity information for: dihedral[1,1]
+WARNING:: 25 _hist and/or __trace__ attributes removed
+ CAPS Info: Sensitivity finite difference used for: dihedral[1,1]
+ CAPS Info: Building sensitivity information for: lesweep[1,1]
+WARNING:: 25 _hist and/or __trace__ attributes removed
+ CAPS Info: Sensitivity finite difference used for: lesweep[1,1]
+ CAPS Info: Building sensitivity information for: taper[1,1]
+WARNING:: 25 _hist and/or __trace__ attributes removed
+ CAPS Info: Sensitivity finite difference used for: taper[1,1]
+ CAPS Info: Building sensitivity information for: twist[1,1]
+WARNING:: 25 _hist and/or __trace__ attributes removed
+ CAPS Info: Sensitivity finite difference used for: twist[1,1]
+Mapping capsGroup attributes ................
+	Number of unique capsGroup attributes = 1
+	Name = wing, index = 1
+Mapping capsMesh attributes ................
+	Number of unique capsMesh attributes = 0
+Getting surface mesh for body 1 (of 1)
+	Tessellating body
+Number of nodes    = 13193
+Number of elements = 12593
+Number of node elements          = 0
+Number of line elements          = 0
+Number of triangle elements      = 0
+Number of quadrilateral elements = 12593
+----------------------------
+Total number of nodes    = 13193
+Total number of elements = 12593
+Mapping Csys attributes ................
+	Number of unique Csys attributes = 0
+
+Getting FEA coordinate systems.......
+	Number of coordinate systems - 0
+	No coordinate systems found - defaulting to global
+Mapping capsConstraint attributes ................
+	Number of unique capsConstraint attributes = 1
+	Name = wingRoot, index = 1
+Mapping capsLoad attributes ................
+	Number of unique capsLoad attributes = 1
+	Name = bottomWing, index = 1
+Mapping capsBound attributes ................
+	Number of unique capsBound attributes = 0
+Mapping capsConnect attributes ................
+	Number of unique capsConnect attributes = 0
+Mapping capsResponse attributes ................
+	Number of unique capsResponse attributes = 0
+Mapping capsGroup attributes ................
+	Number of unique capsGroup attributes = 1
+	Name = wing, index = 1
+Setting FEA Data
+	Mesh for body = 0
+	Number of nodal coordinates = 13193
+	Number of elements = 12593
+	Elemental Nodes = 0
+	Elemental Rods  = 0
+	Elemental Tria3 = 0
+	Elemental Quad4 = 12593
+
+Getting FEA materials.......
+	Number of materials - 1
+	Material name - madeupium
+	Done getting FEA materials
+
+Getting FEA properties.......
+	Number of properties - 1
+	Property name - wing
+	Done getting FEA properties
+Updating mesh element types based on properties input
+
+Getting FEA constraints.......
+	Number of constraints - 1
+	Constraint name - fixRoot
+	No "constraintType" specified for Constraint tuple fixRoot, defaulting to "ZeroDisplacement"
+	Done getting FEA constraints
+Support tuple is NULL - No supports applied
+Connect tuple is NULL - Using defaults
+
+Getting FEA loads.......
+	Number of loads - 1
+	Load name - lift
+	Done getting FEA loads
+
+Getting FEA design variables.......
+	Number of design variables          - 6
+	Design_Variable name - area
+	Design_Variable name - aspect
+	Design_Variable name - dihedral
+	Design_Variable name - lesweep
+	Design_Variable name - taper
+	Design_Variable name - twist
+	Number of design variable relations - 6
+	Done getting FEA design variables
+Design_Constraint tuple is NULL - No design constraints applied
+Design_Equation tuple is NULL - No design equations applied
+Design_Table tuple is NULL - No design table constants applied
+Design_Opt_Param tuple is NULL - No design optimization parameters applied
+Design_Response tuple is NULL - No design responses applied
+Design_Equation_Response tuple is NULL - No design equation responses applied
+Analysis tuple is NULL
+
+Getting FEA analyses.......
+	Number of analyses - 1
+	Analysis name - Default
+	Done getting FEA analyses
+
+Writing Nastran grid and connectivity file (in large field format) ....
+Finished writing Nastran grid file
+
+Writing subElement types (if any) - appending mesh file
+
+Writing TACS instruction file....
+	Writing analysis cards
+	Writing load ADD cards
+	Writing constraint ADD cards
+	Writing load cards
+	Writing constraint cards
+	Writing material cards
+	Writing property cards
+	Writing design variable cards
+[0] Creating TACSAssembler with numOwnedNodes = 13193 numElements = 12593
+[0] BCSRMat: ILU(1000) Input fill ratio 20.00, actual fill ratio: 4.84, nnz(ILU) = 557241
+ CAPS Info: Building sensitivity information for: area[1,1]
+WARNING:: 25 _hist and/or __trace__ attributes removed
+ CAPS Info: Sensitivity finite difference used for: area[1,1]
+ CAPS Info: Building sensitivity information for: aspect[1,1]
+WARNING:: 25 _hist and/or __trace__ attributes removed
+ CAPS Info: Sensitivity finite difference used for: aspect[1,1]
+ CAPS Info: Building sensitivity information for: dihedral[1,1]
+WARNING:: 25 _hist and/or __trace__ attributes removed
+ CAPS Info: Sensitivity finite difference used for: dihedral[1,1]
+ CAPS Info: Building sensitivity information for: lesweep[1,1]
+WARNING:: 25 _hist and/or __trace__ attributes removed
+ CAPS Info: Sensitivity finite difference used for: lesweep[1,1]
+ CAPS Info: Building sensitivity information for: taper[1,1]
+WARNING:: 25 _hist and/or __trace__ attributes removed
+ CAPS Info: Sensitivity finite difference used for: taper[1,1]
+ CAPS Info: Building sensitivity information for: twist[1,1]
+WARNING:: 25 _hist and/or __trace__ attributes removed
+ CAPS Info: Sensitivity finite difference used for: twist[1,1]
+WARNING:: 25 _hist and/or __trace__ attributes removed
+ERROR:: (face_not_found) in Branch Brch_000057 at [[/home/sengelstad6/git/caps2tacs/Examples/wing/afrl_wing4.csm:108]]
+        SELECT specified nonexistant Face
+Design var:  [40.   6.   0.5  5.  30.   5. ]
+Design var:  [40.   6.   0.5  5.  30.   5. ]
+Design var:  [1.75002251e+01 8.24977495e+00 1.00606643e-03 2.75022526e+00
+ 2.87354287e+01 9.49976381e+00]
+Traceback (most recent call last):
+  File "paropt/ParOpt.pyx", line 545, in paropt.ParOpt._evalobjcon
+  File "optimization.py", line 95, in evalObjCon
+    self.problem.fullSolve(x[:])
+  File "/home/sengelstad6/git/caps2tacs/caps2tacs/caps2tacs.py", line 86, in fullSolve
+    self.runTACS()
+  File "/home/sengelstad6/git/caps2tacs/caps2tacs/caps2tacs.py", line 96, in runTACS
+    self.aim.preAnalysis()
+  File "/home/sengelstad6/packages/ESPbeta/EngSketchPad/pyESP/pyCAPS/problem.py", line 1949, in preAnalysis
+    self._analysisObj.preAnalysis()
+  File "/home/sengelstad6/packages/ESPbeta/EngSketchPad/pyESP/pyCAPS/caps.py", line 2508, in preAnalysis
+    if stat: _raiseStatus(stat, errors=capsErrs(nErr, errs))
+  File "/home/sengelstad6/packages/ESPbeta/EngSketchPad/pyESP/pyCAPS/caps.py", line 759, in _raiseStatus
+    raise CAPSError(status, msg=msg, errors=errors)
+pyCAPS.caps.CAPSError: OCSM_FACE_NOT_FOUND:
+================================================================================
+caps_build Error: ocsmBuild fails!
+================================================================================
+
+

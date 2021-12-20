@@ -1,0 +1,116 @@
+# afrl_wing4  (thick ribs and spars)
+# written by John Dannenhoffer, modified by Sean Engelstad
+
+#configuration parameters
+cfgpmtr   series    8412      mptt
+cfgpmtr   nspar     3         -
+cfgpmtr   nrib      8         -
+cfgpmtr   onesolid  1
+
+
+# default design parameters
+despmtr   area      40        len^2
+despmtr   aspect    6.0       -
+despmtr   taper     0.5       -
+despmtr   twist     5.0       deg
+despmtr   lesweep   30.0      deg
+despmtr   dihedral  5.0       deg
+
+
+
+
+# internal parameters
+set       cmean     sqrt(area/aspect)
+set       span      cmean*aspect
+set       sspan     span/2
+set       croot     2*cmean/(1+taper)
+set       ctip      croot*taper
+set       xtip      sspan*tand(lesweep)
+set       ytip      sspan*tand(dihedral)
+
+set       ybot      -0.1*croot
+set       ytop      +0.2*croot+ytip
+set       extend    0.02*cmean
+
+# wing OML
+mark
+udprim              naca      Series    series
+scale               croot
+udprim              naca      Series    series
+scale               ctip
+rotatez             -twist    0         0
+translate           xtip      ytip      -sspan
+loft                0
+attribute           OML 0
+
+dump                OML.egads  1
+
+# spars
+patbeg              ispar  nspar
+    set             frac  ispar/(nspar+1)
+    skbeg           frac*croot      ybot  +extend
+        linseg      frac*ctip+xtip  ybot  -sspan-extend
+    skend
+    extrude         0  ytop-ybot  0
+    attribute       spar  ispar
+
+    # trim to OML if not onesolid
+    patbeg          dum  1-onesolid
+        import      OML.egads
+        intersect
+    patend
+   
+patend
+
+# ribs
+patbeg              irib  nrib
+    set             frac  (irib-1)/(nrib-1)
+    skbeg           frac*xtip-extend                     ybot  -frac*sspan
+        linseg      croot+frac*(xtip-croot+ctip)+extend  ybot  -frac*sspan
+    skend
+    extrude         0  ytop-ybot  0
+    attribute       rib  irib
+   
+    # trim to OML if not onesolid
+    patbeg          dum  1-onesolid
+        import      OML.egads
+        intersect
+    patend
+   
+    # union with ribs if onesolid
+    patbeg          dum  onesolid
+        union
+        patbeg      foo  ifzero(irib-1,nspar-1,0)
+            union
+        patend
+    patend
+   
+patend
+
+# trim to OML if onesolid
+patbeg              dum  onesolid
+    import          OML.egads
+    intersect
+patend
+
+select body
+	attribute capsAIM $egadsTessAIM;tacsAIM
+
+dimension faceList 1 4
+cfgpmtr faceList "44;45;50;53"
+dimension edgeList 1 24
+cfgpmtr edgeList "95;77;59;41;23;10;1;118;103;85;90;49;31;18;131;123;108;67;72;54;36"
+
+select face
+	attribute capsGroup $wing
+
+#patbeg find 4
+#   select face !faceList[1,find]
+#       attribute capsConstraint $wingRoot
+#patend
+#patbeg eind 24
+#   select edge !edgeList[1,eind]
+#       attribute capsLoad $bottomWing
+#patend
+
+end
