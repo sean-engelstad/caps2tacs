@@ -80,10 +80,12 @@ class Optimization(ParOpt.Problem):
         self.minStress = minStress
     def getVarsAndBounds(self, x, lb, ub):
         """Get the variable values and bounds"""
-        initialValues = [40,6.0,0.5,5.0,30.0,5.0]
+        #area, aspectRatio, taper, twistAngle, leadingEdgeSweep, dihedral
+        initialValues = [40.0,6.0,0.5,5.0,30.0,5.0]
+        lowerBounds = [20.0, ]
         upperBounds = [100,10.0,10.0,10.0,50.0,20.0]
-        lb[:] = 1e-3
         for i in range(self.nvar):
+            lb[i] = lowerBounds[i]
             ub[i] = upperBounds[i]
             x[i] = initialValues[i]
         return
@@ -128,14 +130,17 @@ class Optimization(ParOpt.Problem):
 
 #run options: check, run
 option = "check"
-    
+#option = "run"
+
 myOpt = Optimization()
 
 
 if (option == "check"):
     #myOpt.problem.checkGradients()
-    x = [1.75002251e+01, 8.24977495e+00, 1.00606643e-03, 2.75022526e+00, 2.87354287e+01, 9.49976381e+00]
-    myOpt.problem.viewGeometry(x)
+    x = [1.75002251e+01, 8.227+00, 1.00606643e-01, 2.77022526e+00, 2.87394287e+01, 9.47776381e+00]
+    x2 = [ 0.10000001,  9.99998846,  1.60898103,  0.10006751, 10.9068694,   0.10015052]
+    myOpt.problem.fullSolve(x2)
+    myOpt.problem.viewGeometry(x2)
 elif (option == "run"):
     myOpt.setBounds(maxStress=2.0,minStress=0.5)
     

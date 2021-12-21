@@ -75,5 +75,13 @@ select    body
 attribute capsAIM   $egadsTessAIM;tacsAIM
 select    face
 attribute capsGroup   $wing
+patbeg    find   4
+   select    face   !faceList[1,find]
+attribute capsConstraint   $wingRoot
+patend
+patbeg    eind   24
+   select    edge   !edgeList[1,eind]
+attribute capsLoad   $bottomWing
+patend
 
 end

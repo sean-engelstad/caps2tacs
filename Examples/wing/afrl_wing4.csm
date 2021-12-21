@@ -104,13 +104,13 @@ cfgpmtr edgeList "95;77;59;41;23;10;1;118;103;85;90;49;31;18;131;123;108;67;72;5
 select face
 	attribute capsGroup $wing
 
-#patbeg find 4
-#   select face !faceList[1,find]
-#       attribute capsConstraint $wingRoot
-#patend
-#patbeg eind 24
-#   select edge !edgeList[1,eind]
-#       attribute capsLoad $bottomWing
-#patend
+patbeg find 4
+   select face !faceList[1,find]
+       attribute capsConstraint $wingRoot
+patend
+patbeg eind 24
+   select edge !edgeList[1,eind]
+       attribute capsLoad $bottomWing
+patend
 
 end
