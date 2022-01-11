@@ -81,9 +81,9 @@ class Optimization(ParOpt.Problem):
     def getVarsAndBounds(self, x, lb, ub):
         """Get the variable values and bounds"""
         #area, aspectRatio, taper, twistAngle, leadingEdgeSweep, dihedral
-        initialValues = [40.0,6.0,0.5,5.0,30.0,5.0]
-        lowerBounds = [20.0, ]
-        upperBounds = [100,10.0,10.0,10.0,50.0,20.0]
+        lowerBounds =   [20.0, 3.0,  0.3,  1.0,  3.0,  1.0 ]
+        initialValues = [40.0, 6.0,  0.5,  5.0,  30.0, 5.0 ]
+        upperBounds =   [100.0,10.0, 10.0, 10.0, 50.0, 20.0]
         for i in range(self.nvar):
             lb[i] = lowerBounds[i]
             ub[i] = upperBounds[i]
@@ -129,8 +129,8 @@ class Optimization(ParOpt.Problem):
 ## Optimization problem defined here ##
 
 #run options: check, run
-option = "check"
-#option = "run"
+#option = "check"
+option = "run"
 
 myOpt = Optimization()
 

@@ -1,335 +1,193 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Nov 18 14:21:31 2021
+Created on Tue Jan 11 13:54:34 2022
 
 @author: sengelstad6
 """
 
 import os
 import numpy as np
-
 import pyCAPS
 
-from tacs.pytacs import pyTACS
-from tacs import functions
-
 class Caps2Tacs:
-    
-    def __init__(self, csmFile, setupFunction):
-        #get the CSM file and initialize the aims
-        
-        self.csmFile = csmFile
+    def __init__(self, csmFile, capsFunction, pytacsFunction, printNodes=True):
             
-        #initialize things
-        self.initAim()
+        #initialize the tacs and egads aims
+        self.initAims(csmFile, capsFunction)
         
-        #give it a function to setup the loads, BCs, mesh in CAPS
-        #myFunction(egadsAim,tacsAim)    
-        self.setupCapsProblem(setupFunction)
+        #store the run pytacs method
+        self.pytacsFunction = pytacsFunction
         
-    def initAim(self):
-        #initialize the egads and tacs aims
+        #specify the run settings
+        self.reorder = True #reorder nodes
+        self.printNodes = printNodes #print nodes in the sens file
         
-        self.caps = pyCAPS.Problem('myCAPS', capsFile=self.csmFile, outLevel=0)
+    def initAims(self, csmFile, capsFunction):
+        #initialize egads and tacs AIMs and store them in self.tacs and self.egads
         
+        #initialize the caps analysis object 
+        self.caps = pyCAPS.Problem('myCAPS', capsFile=csmFile, outLevel=0)
+        
+        #store caps geometry and desvars
         self.geom = self.caps.geometry
-        self.deskeys = self.geom.despmtr.keys()
-        desDict = {}
-        for key in self.deskeys:
-            desDict[key] = {}
-            
-        self.nvar = len(self.deskeys)
+        self.desvars = self.geom.despmtr.keys()
+        self.nvar = len(self.desvars)
         
+        #generate egads aim
         self.egads = self.caps.analysis.create(aim="egadsTessAIM")
         
-        #self.aim is the tacs AIM
-        self.aim = self.caps.analysis.create(aim = "tacsAIM",
-                                         name = "tacs")
-        self.aim.input.Design_Variable = desDict
+        #generate tacs aim
+        self.tacs = self.caps.analysis.create(aim = "tacsAIM", name = "tacs")
         
-    def setupCapsProblem(self, setupFunction):
-        #run the setup function to setup egads and tacs aims with 
-        #BCs, material properties, loads, etc.
-        setupFunction(self.egads,self.aim)
+        #run the setupFunction to set mesh, geom, load, mat prop settings 
+        #in egads and tacs aims
+        capsFunction(self.egads, self.tacs)
         
-        self.NumberOfNode = self.egads.output.NumberOfNode
+    def solveStructuralProblem(self, desvar=None):
+        #to solve each structural problem, we update our design variables
+        #then we run TACS, compute its func and sens
+        #then print & combine sensitivities with caps to get df/dD and store them
         
-    def updateDesign(self,x):
-        x = np.array(x)
-        #print(x)
-        ind = 0
-        for key in self.deskeys:
-            self.geom.despmtr[key].value = x[ind]
-            ind += 1
-            
-    def viewGeometry(self,x):
-        #view the mesh
-        self.updateDesign(x)
-        self.aim.geometry.view()        
+        #update design with new desvar
+        if (not(desvar is None)):
+            self.updateDesign(desvar)
         
-    def fullSolve(self,x=None):
-        #full solve computes the function values and gradients from caps to tacs 
-        #for each design vector x
-    
-        #update design with design vector x, if x is none use current
-        if (not(x is None)):
-            self.updateDesign(x)
-            
-        #run tacs/pytacs and reorder the sensitivity
+        #run TACS with new design
         self.runTACS()
-        self.reorderNodes()
-        self.getFunctionNames()
         
-        #print the sensitivity and compute func and grad from caps aim
-        self.printSensitivity()
-        self.getGradients()
-        self.getFunctions()
-            
-    def runTACS(self, evalFuncs=None):
+        #print sensitivity files to caps and combine them
+        self.combineSensitivities()
+        
+        #store results - function values and full sensitivity
+        self.storeResults()
+        
+    def updateDesign(self, desvar, output=False):
+        desvar = np.array(desvar)
+        if (output): print("Design variables: ", desvar)
+        ind = 0
+        for key in self.geom.despmtr.keys():
+            self.geom.despmtr[key].value = desvar[ind]
+            ind += 1    
+    
+    def runTACS(self):
+        #build the BDF and data file with CAPS preanalysis
+        #then run pytacs on the data file, computing func, sens
+        
         #run tacs aim preanalysis to generate BDF and DAT file
-        self.aim.preAnalysis()
+        self.tacs.preAnalysis()
         
-        #read the data file into pytacs
-        datFile = os.path.join(self.aim.analysisDir, self.aim.input.Proj_Name + '.dat')
-        self.FEASolver = pyTACS(datFile)
+        #read the data file
+        datFile = os.path.join(self.tacs.analysisDir, self.tacs.input.Proj_Name + '.dat')
         
-        # Set up TACS Assembler
-        self.FEASolver.initialize()
+        #compute function values and sensitivities for each SP in your Pytacs method
+        self.pytacsFunction(self, datFile)
         
-        #add functions
-        if (evalFuncs is None):
-            evalFuncs = ['wing_mass', 'ks_vmfailure']
+    def combineSensitivities(self):
         
-        # Read in forces from BDF and create tacs struct problems
-        SPs = self.FEASolver.createTACSProbsFromBDF()
-        for caseID in SPs:
-           SPs[caseID].addFunction('wing_mass', functions.StructuralMass)
-           SPs[caseID].addFunction('ks_vmfailure', functions.KSFailure, safetyFactor=1.5, ksWeight=1000.0)
-
-        # Solve each structural problem and write solutions
-        self.pytacsFunc = {}; self.pytacsSens = {}
-        for caseID in SPs:
-            SPs[caseID].solve()
-            SPs[caseID].evalFunctions(self.pytacsFunc,evalFuncs=evalFuncs)
-            SPs[caseID].evalFunctionsSens(self.pytacsSens,evalFuncs=evalFuncs)
-            SPs[caseID].writeSolution(outputDir=os.path.dirname(__file__))
-            
-        #get the keys for each function
-        self.funcKeys = self.pytacsFunc.keys()
-        self.nfunc = len(self.funcKeys)
+        #run bookkeeping data to get nfunc, nnodes, etc.
+        self.bookKeeping()
         
+        #reorder the nodes from pytacs, thus rearranging Xpts sensitivity
+        if (self.reorder): self.reorderNodes()
+        
+        #print the sensitivities from tacs to CAPS
+        self.printSensitivity()
+    
     def reorderNodes(self):
-        self.meshSens = {}
-        #reorder the nodes
+        #as the nodes get reordered via MPI when running pytacs
+        #we have to reorder them back using the tacsNodeMap
+        #this changes the final sensitivities
+        
+        #loop over each function that was evaluated to change sensitivities for that
         for key in self.funcKeys:
-            dfdX = self.pytacsSens[key]['Xpts']
             
-            #dfdX is 3*nnodes want it to be nnodes x 3
-            nnodes = int(len(dfdX)/3)
+            #get sensitivity w.r.t. mesh aka Xpts sens
+            dfdX = self.sens[key]['Xpts']
+            dfdX = dfdX.reshape((self.nnodes,3))
+            
+            #thickness desvars, no reordering for this
+            #dfdH = self.pytacsSens[key]['struct']
             
             #get the nodemap from pytacs
-            bdfNodes = np.linspace(1.0,nnodes,nnodes)
+            bdfNodes = np.linspace(1.0,self.nnodes,self.nnodes)
             tacsNodeMap = self.FEASolver.meshLoader.getLocalNodeIDsFromGlobal(bdfNodes,nastranOrdering=True)
             
-            #             
-            dfdX = dfdX.reshape((nnodes,3))
-            dfdX_bdf = np.zeros((nnodes,3))
-            
-            for bdfind in range(nnodes):
+            #reorder nodes as dfdX_bdf
+            dfdX_bdf = np.zeros((self.nnodes,3))
+            for bdfind in range(self.nnodes):
                     #node 1 in bdf, corresponds to 0 bdfind, and plug in bdfind-1 to get tacsInd cause cyclically off by 1
                     tacsInd = tacsNodeMap[bdfind] #tacsNodeMap is cyclically off by 1
                     dfdX_bdf[bdfind,:] = dfdX[tacsInd,:]
-            #print(coords_nastran)
-            #put back into funcSens dict
-            self.meshSens[key] = dfdX_bdf
             
-    def printSensitivity(self):
-        #print the sensitivity file
+            #update function sensitivity
+            self.sens[key]['Xpts'] = dfdX_bdf
         
-        printNodes = False #setting to print nodes as first entry
+    def bookKeeping(self):
+        #get bookkeeping info on func such as funcKeys, nfunctions, nnodes
+        self.funcKeys = self.func.keys()
+        self.nfunc = len(self.funcKeys)
+        funcKeysList = list(self.funcKeys)
+        
+        #get number of nodes
+        print("func \n",self.func)
+        print("sens \n",self.sens)
+        print("funckeys\n",self.funcKeys)
+        subSens = self.sens[funcKeysList[0]]['Xpts']
+        self.nnodes = int(len(subSens)/3)
+    
+    def printSensitivity(self):
+        #print our dfdX sensitivity to CAPS
+        #then this will be combined to produce df/dD sensitivity
+        #available in dynout variables
         
         #where to print .sens file
-        filename = os.path.join(self.aim.analysisDir, self.aim.input.Proj_Name+".sens")
+        sensFilename = os.path.join(self.tacs.analysisDir, self.tacs.input.Proj_Name+".sens")
         
         #open the file
-        with open(filename, "w") as f:
+        with open(sensFilename, "w") as f:
             
             #write (nfunctions, nnodes) in first lien
-            f.write("{} {}\n".format(self.nfunc,self.NumberOfNode))
+            f.write("{} {}\n".format(self.nfunc, self.nnodes))
             
             #for each function mass, stress, etc.
             for key in self.funcKeys:
                 
                 #get the pytacs/tacs sensitivity w.r.t. mesh for that function
-                cSens = self.meshSens[key]
+                cSens = self.sens[key]['Xpts']
                 
                 #write the value of the function
                 f.write(key + "\n")
-                f.write("{}\n".format(self.pytacsFunc[key]))
+                f.write("{}\n".format(self.func[key]))
                 
                 #for each node, print nodeind, dfdx, dfdy, dfdz for that mesh element
-                for nodeind in range(self.NumberOfNode): # d(Func1)/d(xyz)
-                    if (printNodes):
-                        f.write("{} {} {}\n".format(nodeind, cSens[nodeind,0], cSens[nodeind,1], cSens[nodeind,2]))
+                for nodeind in range(self.nnodes): # d(Func1)/d(xyz)
+                    
+                    #if we print nodes first, then print them
+                    if (self.printNodes):
+                        bdfind = nodeind + 1
+                        f.write("{} {} {} {}\n".format(bdfind, cSens[nodeind,0], cSens[nodeind,1], cSens[nodeind,2]))
+                    #otherwise just print df/dx, df/dy, df/dz for each element
                     else:
                         f.write("{} {} {}\n".format(cSens[nodeind,0], cSens[nodeind,1], cSens[nodeind,2]))
         
         #run aim postanalysis
-        self.aim.postAnalysis()
-        
-    def dict2vec(self,dictionary):
-        keys = dictionary.keys()
-        vector = np.zeros((len(keys)))
-        index = 0
-        for key in keys:
-            vector[index] = dictionary[key]
-            index += 1
-        return vector
+        self.tacs.postAnalysis()
+        print("finished postanalysis\n")
     
-    def dict2matrix(self,dictionary):
-        keys1 = list(dictionary.keys())
-        keys2 = dictionary[keys1[0]].keys()
+    def storeResults(self):
+        #store the function and full df/dD sensitivities from CAPS aim dynout attributes
         
-        matrix = np.zeros((len(keys1),len(keys2)))
-        row = 0
-        for key1 in keys1:
-            col = 0
-            for key2 in keys2:
-                matrix[row,col] = dictionary[key1][key2]
-                col += 1
-            row += 1
-        return matrix
-    
-    def gradientDict2vec(self, dictionary):
-        keys1 = list(dictionary.keys())
-        keys2 = dictionary[keys1[0]].keys()
+        #initialize gradient variable
+        self.grad = {}
         
-        newdict = {}
-        for key1 in keys1:
-            vec = np.zeros((len(keys2)))
-            index = 0
-            for key2 in keys2:
-                vec[index] = dictionary[key1][key2]
-                index += 1
-            newdict[key1] = vec
-        return newdict
-    
-    def getGradients(self, asDict=True):
-        #get the chain rule gradient tacs->caps, from caps tacs aim
-        
-        desKeys = self.aim.input.Design_Variable.keys()
-        sens = {}
+        #loop over each pytacs function
         for key in self.funcKeys:
-            sens[key] = {}
-            for desKey in desKeys:
-                sens[key][desKey] = self.aim.dynout[key].deriv(desKey)
-        self.gradientDict = sens
-        self.gradients = self.gradientDict2vec(sens)
+            self.func[key] = self.tacs.dynout[key].value
+            self.grad[key] = {}
             
-        if (asDict):
-            return self.gradientDict
-        else:
-            return self.gradients
-    def getFunctions(self, asDict=True):
-        #get the function values from the caps tacs aim
-            
-        func = {}
-        for key in self.funcKeys:
-            func[key] = self.aim.dynout[key].value
-            
-        self.functionDict = func
-        self.functions = self.dict2vec(func)
-    
-        if (asDict):
-            return self.functionDict
-        else:
-            return self.functions
-        
-    def printValues(self):
-        print("\n"); print("\n")
-        for key in self.funcKeys:
-            print(key + " = ",self.functionDict[key])
-            print("gradient = ",self.gradients[key])
-            print("\n")
-    
-############################################################
-    #Output Functions section
-        
-    def getFunctionNames(self):
-        self.massStr = ""
-        self.stressStr = ""
-        for key in self.funcKeys:
-            #print("Key: ",key)
-            if ("mass" in key):
-                self.massStr = key
-            if ("failure" in key):
-                self.stressStr = key
-    
-    def reSolve(self,x=None):
-        if (not(x is None)):
-            self.fullSolve(x)
-    
-    def mass(self, x=None):
-        self.reSolve(x)
-        return self.functionDict[self.massStr]
-    
-    def vm_stress(self,x=None):
-        self.reSolve(x)
-        return self.functionDict[self.stressStr]
-    
-    def mass_grad(self,x=None):
-        self.reSolve(x)
-        return self.gradients[self.massStr]
-    
-    def vm_stress_grad(self,x=None):
-        self.reSolve(x)
-        return self.gradients[self.stressStr]
-    
-    def checkGradients(self, x=None, h=1e-4):
-        #Finite Difference Check
-        functions = [self.mass,self.vm_stress]
-        gradients = [self.mass_grad, self.vm_stress_grad]
-        names = ["mass","ks_vm_stress"]
-        
-        if (x is None):
-            x = np.ones((self.nvar))
-        
-        errors = []
-        for i in range(2):
-            myfunc = functions[i]
-            mygrad = gradients[i]
-            name = names[i]
-            
-            x = np.array(x)        
-            p = np.random.uniform(size=x.shape)
-            p = p / np.linalg.norm(p)
-            
-            #print(p)
-            
-            func1 = myfunc(x-p*h)
-            func2 = myfunc(x+p*h)
-            
-            fdGrad = (func2-func1)/2/h
-            cgrad = mygrad(x)
-            #print(mygrad,p)
-            directDeriv = np.matmul(cgrad, p)
-            
-            error = (directDeriv - fdGrad)/fdGrad
-            errors.append(error)
-            
-        #print the functions
-        print("\n"); print("\n")
-        for i in range(2):
-            names = name[i]; error = errors[i]
-            print(name + ' FD gradient error',error)
-        print("\n")
-    def printDesignVariables(self,x):
-        print("")
-        print("Design Variables::")
-        
-        desDict = self.aim.input.Design_Variable
-        ind = 0
-        for key in desDict.keys():
-            print(key, " = ", x[ind])
-            ind += 1
+            #loop over each design variable to get the full df/dD gradient
+            for deskey in self.tacs.input.Design_Variable.keys():
+                self.grad[key][deskey] = self.tacs.dynout[key].deriv(deskey)
+        print("finished storing results\n")
+        print(self.grad)

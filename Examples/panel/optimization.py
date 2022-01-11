@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-from caps2tacs import Caps2Tacs
-#can't import setup Function from somewhere else, causes capsLock issue
-#from setupFunction import setupCAPS
+import os
+from caps2tacs_take2 import Caps2Tacs
 from paropt import ParOpt
 from mpi4py import MPI
+from tacs.pytacs import pyTACS
+from tacs import functions
 
-def setupCAPS(egadsAim,tacsAim):
+def capsFunction(egadsAim,tacsAim):
     #setup function for panel.csm
     
 	#Egads Aim section, for mesh
@@ -60,18 +61,51 @@ def setupCAPS(egadsAim,tacsAim):
     
     # Set loads
     tacsAim.input.Load = {"appliedPressure": load }
+    
+def pytacsFunction(obj, datFile):
+    #locally defined method that runs pytacs with your desired functions
+    #and prints the function values and sensitivity, for each data file & bdf pair
+
+    #initialize pytacs with that data file
+    obj.FEASolver = pyTACS(datFile)
+        
+    # Set up TACS Assembler
+    obj.FEASolver.initialize()
+    
+    #choose the functions to evaluate
+    evalFuncs = ['wing_mass', 'ks_vmfailure']
+    
+    #read the bdf & dat file into pytacs FEAsolver
+    #SPs represents "StructuralProblems"
+    SPs = obj.FEASolver.createTACSProbsFromBDF()
+    
+    # Read in forces from BDF and create tacs struct problems
+    for caseID in SPs:
+       SPs[caseID].addFunction('wing_mass', functions.StructuralMass)
+       SPs[caseID].addFunction('ks_vmfailure', functions.KSFailure, safetyFactor=1.5, ksWeight=1000.0)
+
+    # Solve each structural problem and write solutions
+    func = {}; sens = {}
+    for caseID in SPs:
+        SPs[caseID].solve()
+        SPs[caseID].evalFunctions(func,evalFuncs=evalFuncs)
+        SPs[caseID].evalFunctionsSens(sens,evalFuncs=evalFuncs)
+        SPs[caseID].writeSolution(outputDir=os.path.dirname(__file__))
+
+    #store function and sensitivity values    
+    obj.func = func
+    obj.sens = sens
 
 #ParOpt Optimization Class
 class Optimization(ParOpt.Problem):
     def __init__(self):
-        self.problem = Caps2Tacs("panel.csm", setupCAPS)
+        self.problem = Caps2Tacs("panel.csm", capsFunction, pytacsFunction, printNodes=False)
         
         nvar = 2 #number of design var
         ncon = 2
         nblock = 1
         super(Optimization, self).__init__(MPI.COMM_SELF, nvar, ncon, nblock)
-        self.setBounds()
-    def setBounds(self,maxStress=1.0,minStress=0.0):
+    def setBounds(self, maxStress, minStress):
         self.maxStress = maxStress
         self.minStress = minStress
     def getVarsAndBounds(self, x, lb, ub):
@@ -80,18 +114,30 @@ class Optimization(ParOpt.Problem):
         ub[:] = 3.0
         x[:] = 0.95
         return
+    def getNames(self):
+        massStr = ""
+        stressStr = ""
+        for key in self.problem.funcKeys:
+            #print("Key: ",key)
+            if ("mass" in key):
+                massStr = key
+            if ("failure" in key):
+                stressStr = key
+        return massStr, stressStr
     def evalObjCon(self, x):
         """
         Return the objective, constraint and fail flag
         """
         #run the solver
-        self.problem.fullSolve(x[:])
+        self.problem.solveStructuralProblem(x[:])
+        
+        massKey, stressKey = self.getNames()
 
         fail = 0
-        obj = self.problem.mass() #mass
+        obj = self.problem.func[massKey] #mass
 
-        maxConstr = self.maxStress - self.problem.vm_stress()
-        minConstr = self.problem.vm_stress() - self.minStress
+        maxConstr = self.maxStress - self.problem.func[stressKey]
+        minConstr = self.problem.func[stressKey] - self.minStress
         con = [maxConstr,minConstr] #vmstress
 
         return fail, obj, con
@@ -101,12 +147,14 @@ class Optimization(ParOpt.Problem):
         Return the objective, constraint and fail flag
         """
         #run the solver
-        self.problem.fullSolve(x[:])
+        self.problem.solveStructuralProblem(x[:])
+        
+        massKey, stressKey = self.getNames()
         
         fail = 0
-        g[:] = self.problem.mass_grad()
+        g[:] = self.problem.grad[massKey]
         
-        stress_grad = self.problem.vm_stress_grad()
+        stress_grad = self.problem.grad[stressKey]
         A[0][:] = -stress_grad
         A[1][:] = stress_grad
         
