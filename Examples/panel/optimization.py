@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
-from caps2tacs_take2 import Caps2Tacs
+from caps2tacs import Caps2Tacs
 from paropt import ParOpt
 from mpi4py import MPI
 from tacs.pytacs import pyTACS
@@ -99,7 +99,7 @@ def pytacsFunction(obj, datFile):
 #ParOpt Optimization Class
 class Optimization(ParOpt.Problem):
     def __init__(self):
-        self.problem = Caps2Tacs("panel.csm", capsFunction, pytacsFunction, printNodes=False)
+        self.problem = Caps2Tacs("panel.csm", capsFunction, pytacsFunction, printNodes=True)
         
         nvar = 2 #number of design var
         ncon = 2
