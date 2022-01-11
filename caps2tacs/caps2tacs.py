@@ -40,6 +40,12 @@ class Caps2Tacs:
         #generate tacs aim
         self.tacs = self.caps.analysis.create(aim = "tacsAIM", name = "tacs")
         
+        #put design variables into tacsAim
+        desDict = {}
+        for key in self.desvars:
+            desDict[key] = {}
+        self.tacs.input.Design_Variable = desDict
+        
         #run the setupFunction to set mesh, geom, load, mat prop settings 
         #in egads and tacs aims
         capsFunction(self.egads, self.tacs)
@@ -130,11 +136,9 @@ class Caps2Tacs:
         funcKeysList = list(self.funcKeys)
         
         #get number of nodes
-        print("func \n",self.func)
-        print("sens \n",self.sens)
-        print("funckeys\n",self.funcKeys)
         subSens = self.sens[funcKeysList[0]]['Xpts']
         self.nnodes = int(len(subSens)/3)
+        print(self.nnodes)
     
     def printSensitivity(self):
         #print our dfdX sensitivity to CAPS
@@ -184,10 +188,17 @@ class Caps2Tacs:
         #loop over each pytacs function
         for key in self.funcKeys:
             self.func[key] = self.tacs.dynout[key].value
-            self.grad[key] = {}
+            self.grad[key] = np.zeros((self.nvar))
             
             #loop over each design variable to get the full df/dD gradient
+            ind = 0
             for deskey in self.tacs.input.Design_Variable.keys():
-                self.grad[key][deskey] = self.tacs.dynout[key].deriv(deskey)
-        print("finished storing results\n")
-        print(self.grad)
+                self.grad[key][ind] = self.tacs.dynout[key].deriv(deskey)
+                ind += 1
+        #print("finished storing results\n")
+        #print(self.grad)
+    def printDesignVariables(self, desvar):
+        ind = 0
+        for desvarName in self.desvars:
+            print("{}: {}".format(desvarName, desvar[ind]))
+            ind += 1

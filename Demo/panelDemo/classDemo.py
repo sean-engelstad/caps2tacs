@@ -196,7 +196,7 @@ class Caps2Tacs(ParOpt.Problem):
             #put back into funcSens dict
             funcsSens[key]['Xpts'] = dfdX_bdf
             
-        printNodes = False
+        printNodes = True
         filename = os.path.join(self.tacs.analysisDir, self.tacs.input.Proj_Name+".sens")
         with open(filename, "w") as f:
             f.write("{} {}\n".format(nfunc,self.NumberOfNode))
@@ -206,7 +206,7 @@ class Caps2Tacs(ParOpt.Problem):
                 f.write("{}\n".format(funcs[key]))
                 for nodeind in range(self.NumberOfNode): # d(Func1)/d(xyz)
                     if (printNodes):
-                        f.write("{} {} {}\n".format(nodeind, cSens[nodeind,0], cSens[nodeind,1], cSens[nodeind,2]))
+                        f.write("{} {} {} {}\n".format(nodeind+1, cSens[nodeind,0], cSens[nodeind,1], cSens[nodeind,2]))
                     else:
                         f.write("{} {} {}\n".format(cSens[nodeind,0], cSens[nodeind,1], cSens[nodeind,2]))
                     
@@ -354,7 +354,7 @@ class Caps2Tacs(ParOpt.Problem):
             error = (directDeriv - fdGrad)/fdGrad
             errors.append(error)
         for i in range(2):
-            names = name[i]; error = errors[i]
+            name = names[i]; error = errors[i]
             print(name + ' FD gradient error',error)
     def getVarsAndBounds(self, x, lb, ub):
         """Get the variable values and bounds"""

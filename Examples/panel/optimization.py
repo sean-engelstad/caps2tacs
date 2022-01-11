@@ -191,4 +191,6 @@ elif (option == "run"):
     
     #print optimized information
     myOpt.printObjCon(x)
+    print("\n")
+    print("Final Design: ")
     myOpt.problem.printDesignVariables(x[:])
