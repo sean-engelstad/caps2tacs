@@ -9,7 +9,7 @@ from tacs import functions
 def capsFunction(egadsAim,tacsAim):
     #setup function for panel.csm
     
-	#Egads Aim section, for mesh
+    #Egads Aim section, for mesh
     egadsAim.input.Edge_Point_Min = 5
     egadsAim.input.Edge_Point_Max = 10
     
@@ -60,7 +60,7 @@ def capsFunction(egadsAim,tacsAim):
     # Set load
     liftload = {"groupName"         : "bottomWing",
         "loadType"          : "GridForce",
-        "forceScaleFactor"  : 1.0e5,
+        "forceScaleFactor"  : 1.0e2,
         "directionVector"   : [0.0, 1.0, 0.0]}
     
     # Set loads
@@ -103,7 +103,7 @@ def pytacsFunction(obj, datFile):
 #ParOpt Optimization Class
 class Optimization(ParOpt.Problem):
     def __init__(self):
-        self.problem = Caps2Tacs("afrl_wing4.csm", capsFunction, pytacsFunction, printNodes=True)
+        self.problem = Caps2Tacs("wing.csm", capsFunction, pytacsFunction, printNodes=True)
         
         self.nvar = 6 #number of design var
         ncon = 2
@@ -177,23 +177,44 @@ class Optimization(ParOpt.Problem):
 ## Optimization problem defined here ##
 
 #run options: check, run
-#option = "check"
-option = "run"
+option = "check"
+#option = "run"
 
 myOpt = Optimization()
 
 
 if (option == "check"):
-    #myOpt.problem.checkGradients()
-    x = [1.75002251e+01, 8.227+00, 1.00606643e-01, 2.77022526e+00, 2.87394287e+01, 9.47776381e+00]
-    x2 = [ 0.10000001,  9.99998846,  1.60898103,  0.10006751, 10.9068694,   0.10015052]
-    myOpt.problem.fullSolve(x2)
-    myOpt.problem.viewGeometry(x2)
+    def mass(x):
+        myOpt.problem.solveStructuralProblem(x[:])
+        massKey, stressKey = myOpt.getNames()
+        return myOpt.problem.func[massKey]
+    def stress(x):
+        myOpt.problem.solveStructuralProblem(x[:])
+        massKey, stressKey = myOpt.getNames()
+        return myOpt.problem.func[stressKey]
+    def massGrad(x):
+        myOpt.problem.solveStructuralProblem(x[:])
+        massKey, stressKey = myOpt.getNames()
+        return myOpt.problem.grad[massKey]
+    def stressGrad(x):
+        myOpt.problem.solveStructuralProblem(x[:])
+        massKey, stressKey = myOpt.getNames()
+        return myOpt.problem.grad[stressKey]
+    
+    x = [40.0, 6.0,  0.5,  5.0,  30.0, 5.0 ]
+    funcs = [mass,stress]
+    gradients = [massGrad,stressGrad]
+    names = ["mass","stress"]
+    myOpt.problem.checkGradients(x,funcs,gradients,names,h=1e-4)
 elif (option == "run"):
     myOpt.setBounds(maxStress=2.0,minStress=0.5)
     
     options = {
-        'algorithm': 'mma'}
+    'algorithm': 'mma',
+    'mma_init_asymptote_offset': 0.5,
+    'mma_min_asymptote_offset': 0.01,
+    'mma_bound_relax': 1e-4,
+    'mma_max_iterations': 100}
     
     # Set up the optimizer
     opt = ParOpt.Optimizer(myOpt, options)

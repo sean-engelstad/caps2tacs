@@ -202,3 +202,37 @@ class Caps2Tacs:
         for desvarName in self.desvars:
             print("{}: {}".format(desvarName, desvar[ind]))
             ind += 1
+    def checkGradients(self, x, functions, gradients, names,h=1e-4):
+    	#computes finite difference check for functions and gradients
+    	#that you provide to it
+    
+        #Example:
+        #functions = [self.mass,self.vm_stress]
+        #gradients = [self.mass_grad, self.vm_stress_grad]
+        #names = ["mass","ks_vm_stress"]
+        #x = np.ones(2)
+            #x = np.ones((self.nvar))
+        
+        errors = []
+        for i in range(2):
+            myfunc = functions[i]
+            mygrad = gradients[i]
+            name = names[i]
+            
+            x = np.array(x)        
+            p = np.random.uniform(size=x.shape)
+            p = p / np.linalg.norm(p)
+            
+            func1 = myfunc(x-p*h)
+            func2 = myfunc(x+p*h)
+            
+            fdGrad = (func2-func1)/2/h
+            cgrad = mygrad(x)
+            #print(mygrad,p)
+            directDeriv = np.matmul(cgrad, p)
+            
+            error = (directDeriv - fdGrad)/fdGrad
+            errors.append(error)
+        for i in range(2):
+            name = names[i]; error = errors[i]
+            print(name + ' FD gradient error',error)

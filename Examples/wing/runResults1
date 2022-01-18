@@ -1,0 +1,15 @@
+#failed run 1/12/22 3:40
+#didn't meet final constraint value
+
+Objective Value:  1984.013972396316
+Constraint Value(s):  [-938.5968178991193, 940.0968178991193]
+
+
+Final design: 
+area: 99.99999999994458
+aspect: 3.000000000000578
+taper: 3.439960073587741
+twist: 1.0000000001156153
+lesweep: 3.000000000000606
+dihedral: 3.1358269770163805
+

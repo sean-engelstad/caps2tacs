@@ -174,7 +174,28 @@ myOpt = Optimization()
 
 
 if (option == "check"):
-    myOpt.problem.checkGradients()
+    def mass(x):
+        myOpt.problem.solveStructuralProblem(x[:])
+        massKey, stressKey = myOpt.getNames()
+        return myOpt.problem.func[massKey]
+    def stress(x):
+        myOpt.problem.solveStructuralProblem(x[:])
+        massKey, stressKey = myOpt.getNames()
+        return myOpt.problem.func[stressKey]
+    def massGrad(x):
+        myOpt.problem.solveStructuralProblem(x[:])
+        massKey, stressKey = myOpt.getNames()
+        return myOpt.problem.grad[massKey]
+    def stressGrad(x):
+        myOpt.problem.solveStructuralProblem(x[:])
+        massKey, stressKey = myOpt.getNames()
+        return myOpt.problem.grad[stressKey]
+    
+    x = [1.0, 1.0 ]
+    funcs = [mass,stress]
+    gradients = [massGrad,stressGrad]
+    names = ["mass","stress"]
+    myOpt.problem.checkGradients(x,funcs,gradients,names)
     
 elif (option == "run"):
     myOpt.setBounds(maxStress=2.0,minStress=0.5)
