@@ -35,6 +35,10 @@ shell =   {"propertyType"      : "Shell",
           "material"          : "Madeupium",
           "membraneThickness"      : 1.0}
 
+#nastranAIM only supports thicknessDVs not geomDVs (and of course other AreaDVs...)
+useThicknessDV = True
+useGeomDV = False
+
 propertyDict = {}
 DVdict = {}
 thickInd = 1
@@ -69,10 +73,11 @@ for i in range(nPlates):
     #add the shell propety for that capsGroup
     propertyDict[group] = shell
 
-    #add the thicknessDV for that capsGroup
-    thickness = shell["membraneThickness"]
-    DVname = group
-    DVdict[DVname] = makeThicknessDV(group, thick)
+    if (useThicknessDV):
+        #add the thicknessDV for that capsGroup
+        thickness = shell["membraneThickness"]
+        DVname = group
+        DVdict[DVname] = makeThicknessDV(group, thick)
 
 #iterate over each stiffener capsGroup
 for j in range(nStiffs):
@@ -90,19 +95,17 @@ for j in range(nStiffs):
     #add the shell propety for that capsGroup
     propertyDict[group] = shell
 
-    #add the thicknessDV for that capsGroup
-    DVname = group
-    thickness = shell["membraneThickness"]
-    DVdict[DVname] = makeThicknessDV(group, thick)
+    if (useThicknessDV):
+        #add the thicknessDV for that capsGroup
+        thickness = shell["membraneThickness"]
+        DVname = group
+        DVdict[DVname] = makeThicknessDV(group, thick)
  
 #store the propertyDict we just built
 nastranAIM.input.Property = propertyDict
 
-#add the geometric design variables
-#currently doens't work when you have both thicknessAndGeom design variables
-#thus I turned this off for now
-thicknessAndGeom = False
-if (thicknessAndGeom):
+#add the geometric design variables, if turned on
+if (useGeomDV):
     geomDVs = ["plateLength", "plateWidth", "stiffHeight"]
     for geomDV in geomDVs:
         DVdict[geomDV] = {}

@@ -71,16 +71,20 @@ def makeThicknessDV(capsGroup, thickness):
 thickness = shell1["membraneThickness"]
 desvar1 = makeThicknessDV("plate", thickness)
 
-#thickness and geometry design variables don't work together yet
-thicknessAndGeom = False
-if (thicknessAndGeom):
-    dvDict = {"thick" : desvar1,
-                "plateLength" : {},
-                "plateWidth" : {}}
-else:
-    dvDict = {"thick" : desvar1}
+#thickness DVs work, geom DVs don't work in NastranAIM (geomDVs are despmtr from CSM file)
+useGeomDV = False
+useThickDV = True
+DVdict = {}
+geomDVs = ["plateLength", "plateWidth"]
+if (useGeomDV):
+    for geomDV in geomDVs:
+        #currently we do empty DV for geom in tacs, might want to specify geometric DV
+        #here or something
+        DVdict[geomDV] = {}
+if (useThickDV):
+    DVdict["thick"] = desvar1
 
-nastranAIM.input.Design_Variable = dvDict
+nastranAIM.input.Design_Variable = DVdict
 
 ### Don't seem to be able to change nastranAIM.input values after they are set
 ### How to change the plate thickness in future optimization iterations??

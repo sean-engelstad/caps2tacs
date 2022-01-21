@@ -1,0 +1,48 @@
+1. aim.input.* attributes are static, how to change the thicknesses later?? :
+
+After I store the the dictionaries DVdict and PropertyDict in nastranAIM.input.(attribute), I am unable to change the thicknesses that show up in the .dat file. It seems the .input attributes are constants, and I need a way to change the thickness from iteration to iteration. For example:
+
+	#this would change the initial value of the DVdict
+	tacsAIM.desvar[DVname].value = newThickness
+
+	#this would change the thickness of the PSHELL card
+	#or we could have this PSHELL thickness change as the DV changes (better)
+	tacsAIM.property[capsGroup]["membraneThickness"] = newThickness
+
+2. The DVPREL1 and DESVAR first entries should match (and DVPREL1 has it on the next of it's two lines as well). 
+
+	DESVAR x # # # #
+	DVPREL1 y # # # #
+	DVPREL1 z # # # #
+	
+	where we should have x=y=z=desvarID, all the same integer. However, it's currently printing
+	printing out x=N, y=N00, z=N, so for example (see stiffPanel3.dat):
+	
+	DESVAR 11 # # # #
+	DVPREL1 1100 # # # #
+	DVPREL1 11 # # # #
+	
+	This is just a small bug probably.
+	
+3. Then, you mentioned that you deleted a lot of the Design_Variable code from the nastranAIM to the tacsAIM. In this way, we currently print DESVAR geomDV # # # for our CSM despmtr or geometric design variables by the following:
+
+	desvarDict = {"name1" : {}, "name2" : {}, ... }
+	aim.input.Design_Variable = desvarDict
+
+	where note the design variable is defined with a name, but a value {}. Which produces zeros for the rest of the entries.
+	
+	DESVAR desvarID1 name1 0 0 0 ...
+	DESVAR desvarID2 name2 0 0 0 ...
+	
+In the NastranAIM, I was able to make thickness DVs for my stiffened panel model with 84 capsGroups or thicknessDVs, with the following for each:
+
+	desvar_i    = {"groupName" : capsGroup_i,
+              "initialValue" : thickness_i,
+              "lowerBound" : thickness_i*0.5,
+              "upperBound" : thickness_i*1.5,
+              "maxDelta"   : thickness_i*0.1,
+              "fieldName" : "T"}
+    desvarDict = {"name1" : desvar_1, "name2" : desvar_2, ... }
+	aim.input.Design_Variable = desvarDict
+	
+Anyways, I'm not able to put geometric design variables (the CSM despmtrs) into the Nastran AIM. And I'm not able to put thickness DVs into the TACS AIM. Thus, if you port over the Nastran AIM Design_Variable code, we need to add a way to also add geomDVs, maybe separately.
