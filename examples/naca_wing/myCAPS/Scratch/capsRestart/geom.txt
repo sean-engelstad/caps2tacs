@@ -1,0 +1,13 @@
+12 0
+series
+nspar
+nrib
+area
+aspect
+taper
+twist
+lesweep
+dihedral
+rootFaces
+rootEdges
+bottomFaces

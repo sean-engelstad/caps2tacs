@@ -1,0 +1,109 @@
+#wing.csm similar to afrl4_wing.csm by John Dannenhoffer
+#written by Sean Engelstad
+
+#naca airfoil wing with analytic sensitivity
+
+#configuration parameters
+cfgpmtr  series  8412 mptt
+cfgpmtr  nspar  3  -
+cfgpmtr  nrib  8  -
+
+#default design parameters
+despmtr  area  40  len^2
+despmtr  aspect  6.0  -
+despmtr  taper  0.5  -
+despmtr  twist  5.0  deg
+despmtr  lesweep  30.0 deg
+despmtr  dihedral 5.0  deg
+
+#internal parameters
+set  cmean sqrt(area/aspect)
+set  span cmean*aspect
+set  sspan span/2
+set  croot 2*cmean/(1+taper)
+set  ctip croot*taper
+set  xtip sspan*tand(lesweep)
+set  ytip sspan*tand(dihedral)
+set  margin 0.02*cmean
+set  ybot -0.2*croot-margin
+set  ytop 0.2*croot+ytip+margin
+
+#make two base airfoils
+udprim		naca	Series	series
+scale		croot
+udprim		naca	Series	series
+scale		ctip
+rotatez		-twist	0		0
+translate	xtip	ytip	-sspan
+loft		0
+attribute	OML	0
+
+#store OML of wing
+store		OML
+   
+#spar parameters
+set 	ctipEff		ctip*cosd(twist)
+
+#spars
+patbeg		ispar		nspar
+	#import OML.egads	
+	set		frac		ispar/(nspar+1)
+	set		dx			frac*(croot-ctipEff)-xtip
+	set		hyp			sqrt(sspan*sspan+dx*dx)
+	box 0 ybot margin 0 ytop-ybot -hyp-2*margin
+	set		localSweep	atand(dx/sspan)
+	rotatey localSweep 0 0
+	translate	frac*croot	0	0
+	attribute spar ispar
+	
+	#we leave spars un-unioned here
+patend
+
+#ribs
+patbeg		irib		nrib
+	set		dxmax		max(croot,xtip+ctipEff)+2*margin
+	set		zcoord		-(irib)*sspan/(nrib+1)
+	box 0 ybot zcoord dxmax ytop-ybot 0
+	
+	union
+    patbeg      foo  ifzero(irib-1,nspar-1,0)
+        union
+    patend
+	#union with previous
+patend 
+
+#fillet 0.1 191
+
+#trim ribs and spars to OML 
+restore		OML
+intersect
+
+restore		OML
+hollow 0
+union
+
+
+select face
+	attribute capsGroup $wing
+
+select body
+	attribute capsAIM $egadsTessAIM;tacsAIM
+
+dimension rootFaces 1 4
+cfgpmtr rootFaces "131;130;142;148"
+dimension rootEdges 1 12
+cfgpmtr rootEdges "200;192;179;177;176;169;187;197;195;185;160;182"
+dimension bottomFaces 1 36
+cfgpmtr bottomFaces "125;122;137;145;109;106;123;138;93;90;107;124;77;74;91;108;58;53;75;92;37;32;54;76;16;12;33;55;3;2;14;35;17;15;36;57"
+patbeg find 4
+   select face !rootFaces[1,find]
+       attribute capsConstraint $wingRoot
+patend
+patbeg eind 12
+   select edge !rootEdges[1,eind]
+       attribute capsConstraint $wingRoot
+patend
+patbeg find 36
+   select face !bottomFaces[1,find]
+       attribute capsLoad $bottomWing
+patend

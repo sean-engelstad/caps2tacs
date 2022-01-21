@@ -1,0 +1,24 @@
+despmtr   plateLength       0.5
+despmtr   plateWidth        1.0
+
+# plate segments
+skbeg     0   0   0
+   linseg    plateLength   0   0
+skend     0
+extrude   0   plateWidth   0
+
+select face
+    attribute capsGroup $plate
+    attribute capsLoad   $bottom
+#select face 1 
+
+select body
+    attribute capsAIM $egadsTessAIM;nastranAIM    
+    
+    
+patbeg    i  4
+   select edge i 
+   attribute capsConstraint $edge
+   select node i 
+   attribute capsConstraint $edge     
+patend   
