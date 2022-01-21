@@ -1,65 +1,26 @@
 # /home/sengelstad6/git/caps2tacs/demo/panelThickness/WorkDir/Scratch/capsRestart.cpc written by ocsmSave (v1.21)
 
 # Constant, Design, and Output Parameters:
-despmtr   plateLength       1.00000
+despmtr   plateLength       0.50000
 despmtr   plateWidth       1.00000
-despmtr   stiffHeight       0.05000
-cfgpmtr   nx       2.00000
-cfgpmtr   ny       8.00000
-cfgpmtr   nstiff       4.00000
-cfgpmtr   edgeNumbers     246.00000
 
 # Global Attributes:
 
 # Branches:
-set       nx2 nx*(nstiff+1)
-set       Lx plateLength/nx2
-set       Ly plateWidth/ny
-set       dxStiff plateLength/(nstiff+1)
-mark
-patbeg    ix   nx2
-   patbeg    iy   ny
-      set       plateInd ix+nx2*(iy-1)
-      skbeg     (ix-1)*Lx   (iy-1)*Ly   0   0
-         linseg    ix*Lx   (iy-1)*Ly   0
-      skend     0
-      extrude   0   Ly   0
-      select    face
-attribute capsGroup   !$plate+plateInd
-attribute capsLoad   $plate
-   patend
-patend
-join     0    1
-store     plate   0   0
-patbeg    istiff   nstiff
-   mark
-   patbeg    iy   ny
-      set       stiffInd istiff+nstiff*(iy-1)
-      skbeg     istiff*dxStiff   (iy-1)*Ly   0   0
-         linseg    istiff*dxStiff   iy*Ly   0
-      skend     0
-      extrude   0   0   -stiffHeight
-      select    face
-attribute capsGroup   !$stiff+stiffInd
-attribute capsLoad   $stiff
-   patend
-   join     0    1
-   restore   plate   0
-   join     0    0
-   store     plate   0   0
-patend
-restore   plate   0
+skbeg     0   0   0   0
+   linseg    plateLength   0   0
+skend     0
+extrude   0   plateWidth   0
+select    face
+attribute capsGroup   $plate
+attribute capsLoad   $bottom
 select    body
 attribute capsAIM   $egadsTessAIM;nastranAIM
-patbeg    edgeInd   10
-   select    edge   !edgeNumbers[1,edgeInd]
+patbeg    i   4
+   select    edge   i
 attribute capsConstraint   $edge
-   select    edge   !edgeNumbers[2,edgeInd]
+   select    node   i
 attribute capsConstraint   $edge
 patend
-translate 0.0   0.0   0.0
-rotatex   0.0   0.0   0.0
-rotatey   0.0   0.0   0.0
-rotatez   0.0   0.0   0.0
 
 end
