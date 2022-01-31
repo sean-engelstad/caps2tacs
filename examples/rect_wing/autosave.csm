@@ -3,13 +3,13 @@
 # Constant, Design, and Output Parameters:
 cfgpmtr   nspar       3.00000
 cfgpmtr   nrib       8.00000
-despmtr   area      40.00000
-despmtr   aspect       6.00000
-despmtr   taper       0.50000
-despmtr   twist       5.00000
-despmtr   lesweep      30.00000
-despmtr   dihedral       5.00000
-despmtr   thickRatio       0.20000
+despmtr   area      20.00000
+despmtr   aspect       4.26700
+despmtr   taper       0.38900
+despmtr   twist      10.00000
+despmtr   lesweep      22.36000
+despmtr   dihedral       6.11900
+despmtr   thickRatio       0.06230
 cfgpmtr   rootFaces     131.00000
 cfgpmtr   rootEdges     200.00000
 cfgpmtr   bottomFaces     125.00000
@@ -26,9 +26,9 @@ set       troot croot*thickRatio
 set       ttip ctip*thickRatio
 set       xtip sspan*tand(lesweep)
 set       ytip sspan*tand(dihedral)
-set       margin 0.02*cmean
-set       ybot -thickRatio*croot-margin
-set       ytop thickRatio*croot+ytip+margin
+set       margin 0.1*croot
+set       ybot -troot-margin
+set       ytop troot+ytip+margin
 box       0   0   0   croot   troot   0
 box       xtip   ytip   -sspan   ctip   ttip   0
 rotatez   -twist   0   0

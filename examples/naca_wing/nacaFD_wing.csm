@@ -29,9 +29,9 @@ set  ybot -0.2*croot-margin
 set  ytop 0.2*croot+ytip+margin
 
 #make two base airfoils
-udprim		naca	Series	series
-scale		croot
-udprim		naca	Series	series
+udprim  naca Series series
+scale  croot
+udprim  naca Series series
 scale		ctip
 rotatez		-twist	0		0
 translate	xtip	ytip	-sspan
@@ -91,16 +91,22 @@ select body
 
 dimension rootFaces 1 4
 cfgpmtr rootFaces "131;130;142;148"
-dimension rootEdges 1 12
-cfgpmtr rootEdges "200;192;179;177;176;169;187;197;195;185;160;182"
+dimension rootEdges 1 11
+cfgpmtr rootEdges "200;192;179;177;176;169;187;197;195;160;182"
 dimension bottomFaces 1 36
 cfgpmtr bottomFaces "125;122;137;145;109;106;123;138;93;90;107;124;77;74;91;108;58;53;75;92;37;32;54;76;16;12;33;55;3;2;14;35;17;15;36;57"
+dimension rootNodes 1 9
+cfgpmtr rootNodes "81;75;74;82;78;87;85;90;89"
 patbeg find 4
    select face !rootFaces[1,find]
        attribute capsConstraint $wingRoot
 patend
-patbeg eind 12
+patbeg eind 11
    select edge !rootEdges[1,eind]
+       attribute capsConstraint $wingRoot
+patend
+patbeg nind 9
+   select node !rootNodes[1,nind]
        attribute capsConstraint $wingRoot
 patend
 patbeg find 36

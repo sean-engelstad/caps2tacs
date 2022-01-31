@@ -67,9 +67,20 @@ def capsFunction(egadsAim,tacsAim):
     
     # Set loads
     tacsAim.input.Load = {"lift": liftload }
+    
+    #put in the design variables
+    tacsAim.input.Design_Variable = {"area" : {},
+                                     "aspect" : {},
+                                     "taper" : {},
+                                     "twist" : {},
+                                     "lesweep" : {},
+                                     "dihedral" : {},
+                                     "thickRatio" : {}}
 
 def pytacsFunction(obj, datFile):
-    comm = MPI.COMM_WORLD
+    useMPI = True
+    if (useMPI):
+        comm = MPI.COMM_WORLD
 
     #locally defined method that runs pytacs with your desired functions
     #and prints the function values and sensitivity, for each data file & bdf pair
@@ -104,7 +115,7 @@ def pytacsFunction(obj, datFile):
     obj.func = func
     obj.sens = sens
     
-    checkTACSgradient = True
+    checkTACSgradient = False
     if (checkTACSgradient):
         n = 100
         oMag = np.linspace(-3,-10,n)
@@ -113,32 +124,40 @@ def pytacsFunction(obj, datFile):
         stressFD = np.zeros((n))
         hind = 0
         for dh in hvec:
-            funcs = {}
+            if (hind == 0):
+                funcs = {}
             funcs_new = {}
             #design variable check
             for caseID in SPs:            
                 problem = SPs[caseID]
                 
-                x_orig = problem.getDesignVars()
-                
-                # Reset design variables
-                problem.setDesignVars(x_orig)
-                
-                # Perform a fd/cs sensisitivity check on nodal coordinate sensitivity
-                xpts_orig = problem.getNodes()
+                if (hind == 0):
+                    #gradient check section
+                    x_orig = problem.getDesignVars()
+                    
+                    # Reset design variables
+                    problem.setDesignVars(x_orig)
+                    
+                    # Perform a fd/cs sensisitivity check on nodal coordinate sensitivity
+                    xpts_orig = problem.getNodes()
+                    
+                    #solve original
+                    problem.setNodes(xpts_orig)
+                    problem.solve()
+                    problem.evalFunctions(funcs)
+                    
+                    nnodes = obj.FEASolver.getNumOwnedNodes()
                 
                 # Get number of nodes owned by this proc
-                nnodes = obj.FEASolver.getNumOwnedNodes()
+                
                 xpts_pert = np.random.rand(3 * nnodes)
+                xpts_pert = xpts_pert / np.linalg.norm(xpts_pert)
                 
                 xpts_new = xpts_orig + xpts_pert * dh
                 
-                #solve original
-                problem.setNodes(xpts_orig)
-                problem.solve()
-                problem.evalFunctions(funcs)
                 
-                # Solve new problem (with slight shift)
+                
+                # Solve np.mean(g)new problem (with slight shift)
                 problem.setNodes(xpts_new)
                 problem.solve()
                 problem.evalFunctions(funcs_new)
@@ -167,6 +186,8 @@ def pytacsFunction(obj, datFile):
             massFD[hind] = mass_error
             stressFD[hind] = stress_error
             hind += 1
+        
+        #plot result
         plt.subplot(2,1,1)
         plt.loglog(hvec,massFD,'k-')
         plt.xlabel('step size h')
@@ -182,22 +203,23 @@ def pytacsFunction(obj, datFile):
 #ParOpt Optimization Class
 class Optimization(ParOpt.Problem):
     def __init__(self):
-        self.problem = Caps2Tacs("rect_wing.csm", capsFunction, pytacsFunction, printNodes=True)
+        #design variable order used for parOpt, and this will build the design dict
+        desvarList = ["area","aspect","taper","twist","lesweep","dihedral","thickRatio"]
+        
+        self.problem = Caps2Tacs("rect_wing.csm", capsFunction, pytacsFunction, desvarList)
         
         self.nvar = 7 #number of design var
-        ncon = 2
+        ncon = 1
         nblock = 1
         super(Optimization, self).__init__(MPI.COMM_SELF, self.nvar, ncon, nblock)
-        self.setBounds()
-    def setBounds(self,maxStress=1.0,minStress=0.0):
-        self.maxStress = maxStress
-        self.minStress = minStress
+        
+        self.objs = []
     def getVarsAndBounds(self, x, lb, ub):
-        """Get the variable values and bounds"""
+        #"""Get the variable values and bounds"""
         #area, aspectRatio, taper, twistAngle, leadingEdgeSweep, dihedral, thicknessRatio
         lowerBounds =   [20.0, 3.0,  0.3,  1.0,  3.0,  1.0, 0.05 ]
         initialValues = [40.0, 6.0,  0.5,  5.0,  30.0, 5.0, 0.12 ]
-        upperBounds =   [100.0,10.0, 10.0, 10.0, 50.0, 10.0, 0.20]
+        upperBounds =   [100.0,10.0, 1.0, 10.0, 50.0, 10.0, 0.20]
         for i in range(self.nvar):
             lb[i] = lowerBounds[i]
             ub[i] = upperBounds[i]
@@ -217,6 +239,7 @@ class Optimization(ParOpt.Problem):
         """
         Return the objective, constraint and fail flag
         """
+        
         self.problem.solveStructuralProblem(x[:])
         
         massKey, stressKey = self.getNames()
@@ -224,17 +247,19 @@ class Optimization(ParOpt.Problem):
         fail = 0
         obj = self.problem.func[massKey] #mass
 
-        maxConstr = self.maxStress - self.problem.func[stressKey]
-        minConstr = self.problem.func[stressKey] - self.minStress
-        con = [maxConstr,minConstr] #vmstress
+        maxStress = 0.35
+        maxConstr = maxStress - self.problem.func[stressKey]
+        con = [maxConstr] #vmstress
+        
+        self.objs.append(obj)
 
         return fail, obj, con
 
     def evalObjConGradient(self, x, g, A):
-        """
+        """desDict
         Return the objective, constraint and fail flag
-        """
-        #run the solver
+        """        
+        #run the solver, x[:] opens the parOpt object to an array
         self.problem.solveStructuralProblem(x[:])
         
         massKey, stressKey = self.getNames()
@@ -242,9 +267,7 @@ class Optimization(ParOpt.Problem):
         fail = 0
         g[:] = self.problem.grad[massKey]
         
-        stress_grad = self.problem.grad[stressKey]
-        A[0][:] = -stress_grad
-        A[1][:] = stress_grad
+        A[0][:] = -self.problem.grad[stressKey]
         
         return fail
     def printObjCon(self, x):
@@ -252,12 +275,18 @@ class Optimization(ParOpt.Problem):
         print("\n")
         print("Objective Value: ",obj)
         print("Constraint Value(s): ",con)
-
+        
+    def plotObjectiveProgress(self):
+        niter = len(self.objs)
+        iterations = np.arange(0,niter)
+        plt.plot(iterations, self.objs, 'k-')
+        plt.xlabel('Iteration #')
+        plt.ylabel('mass obj')
+        plt.show()
 ## Optimization problem defined here ##
 
 #run options: check, run
-option = "check"
-#option = "run"
+option = "run"
 
 myOpt = Optimization()
 
@@ -285,15 +314,13 @@ if (option == "check"):
     gradients = [massGrad,stressGrad]
     names = ["mass","stress"]
     myOpt.problem.checkGradients(x,funcs,gradients,names,h=1e-6)
-elif (option == "run"):
-    myOpt.setBounds(maxStress=2.0,minStress=0.5)
     
+elif (option == "run"):    
     options = {
     'algorithm': 'mma',
     'mma_init_asymptote_offset': 0.5,
     'mma_min_asymptote_offset': 0.01,
-    'mma_bound_relax': 1e-4,
-    'mma_max_iterations': 100}
+    'mma_max_iterations': 10}
     
     # Set up the optimizer
     opt = ParOpt.Optimizer(myOpt, options)
@@ -307,3 +334,5 @@ elif (option == "run"):
     print("\n")
     print("Final design: ")
     myOpt.problem.printDesignVariables(x[:])
+    
+    myOpt.plotObjectiveProgress()

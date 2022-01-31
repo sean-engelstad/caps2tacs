@@ -1,0 +1,21 @@
+default order
+area, aspectRatio, taper, twistAngle, leadingEdgeSweep, dihedral
+
+grad compare for mass
+finite diff grad  [ 75.69570198 -49.99784278 -17.79415334  -0.64981077   4.92947311
+   2.79169535]
+chain rule grad  [ 75.69575763 -49.99773179 -17.7984132   -0.65028289   4.92384028
+   2.78889442]
+avg comp rel error  8.219527167131325e-05
+
+grad compare for stress
+finite diff grad  [ -1.42390191 162.77350284   8.80824368  19.33735902 -16.50316947
+  37.20625583]
+chain rule grad  [-0.02374502  0.51501317  2.04045325 -0.00308703  0.03258144  0.00958008]
+avg comp rel error  0.9965197436048204
+
+
+mass FD gradient error 9.188493186508911e-05
+stress FD gradient error 4.288295238966258e-06
+compl FD gradient error -2.177922343407653e-06
+

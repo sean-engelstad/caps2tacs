@@ -62,6 +62,10 @@ def capsFunction(egadsAim,tacsAim):
     # Set loads
     tacsAim.input.Load = {"appliedPressure": load }
     
+    #design variables
+    tacsAim.input.Design_Variable = {"plateLength" : {},
+    								"plateWidth" : {}}
+    
 def pytacsFunction(obj, datFile):
     #locally defined method that runs pytacs with your desired functions
     #and prints the function values and sensitivity, for each data file & bdf pair
@@ -99,15 +103,13 @@ def pytacsFunction(obj, datFile):
 #ParOpt Optimization Class
 class Optimization(ParOpt.Problem):
     def __init__(self):
-        self.problem = Caps2Tacs("panel.csm", capsFunction, pytacsFunction, printNodes=True)
+        desvarList = ["plateLength", "plateWidth"]
+        self.problem = Caps2Tacs("panel.csm", capsFunction, pytacsFunction, desvarList)
         
         nvar = 2 #number of design var
         ncon = 2
         nblock = 1
         super(Optimization, self).__init__(MPI.COMM_SELF, nvar, ncon, nblock)
-    def setBounds(self, maxStress, minStress):
-        self.maxStress = maxStress
-        self.minStress = minStress
     def getVarsAndBounds(self, x, lb, ub):
         """Get the variable values and bounds"""
         lb[:] = 1e-3
@@ -136,8 +138,8 @@ class Optimization(ParOpt.Problem):
         fail = 0
         obj = self.problem.func[massKey] #mass
 
-        maxConstr = self.maxStress - self.problem.func[stressKey]
-        minConstr = self.problem.func[stressKey] - self.minStress
+        maxConstr = 2.0 - self.problem.func[stressKey]
+        minConstr = self.problem.func[stressKey] - 0.5
         con = [maxConstr,minConstr] #vmstress
 
         return fail, obj, con
@@ -168,7 +170,7 @@ class Optimization(ParOpt.Problem):
 ## Optimization problem defined here ##
 
 #run options: check, run
-option = "check"
+option = "run"
     
 myOpt = Optimization()
 
@@ -198,8 +200,7 @@ if (option == "check"):
     myOpt.problem.checkGradients(x,funcs,gradients,names)
     
 elif (option == "run"):
-    myOpt.setBounds(maxStress=2.0,minStress=0.5)
-    
+   
     options = {
         'algorithm': 'mma'}
     

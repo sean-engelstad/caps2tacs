@@ -1,4 +1,4 @@
-# /home/sengelstad6/git/caps2tacs/Examples/naca_wing/myCAPS/Scratch/capsRestart.cpc written by ocsmSave (v1.21)
+# /home/sengelstad6/git/caps2tacs/examples/naca_wing/myCAPS/Scratch/capsRestart.cpc written by ocsmSave (v1.21)
 
 # Constant, Design, and Output Parameters:
 cfgpmtr   series    8412.00000
@@ -13,6 +13,7 @@ despmtr   dihedral       5.00000
 cfgpmtr   rootFaces     131.00000
 cfgpmtr   rootEdges     200.00000
 cfgpmtr   bottomFaces     125.00000
+cfgpmtr   rootNodes      81.00000
 
 # Global Attributes:
 
@@ -69,8 +70,12 @@ patbeg    find   4
    select    face   !rootFaces[1,find]
 attribute capsConstraint   $wingRoot
 patend
-patbeg    eind   12
+patbeg    eind   11
    select    edge   !rootEdges[1,eind]
+attribute capsConstraint   $wingRoot
+patend
+patbeg    nind   9
+   select    node   !rootNodes[1,nind]
 attribute capsConstraint   $wingRoot
 patend
 patbeg    find   36

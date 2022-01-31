@@ -1,1 +1,9 @@
 getFilenames|
+setPmtr|area|1|1|20|
+setPmtr|aspect|1|1|4.267|
+setPmtr|taper|1|1|0.389|
+setPmtr|twist|1|1|10.00|
+setPmtr|lesweep|1|1|22.36|
+setPmtr|dihedral|1|1|6.119|
+setPmtr|thickRatio|1|1|0.0623|
+build|0|

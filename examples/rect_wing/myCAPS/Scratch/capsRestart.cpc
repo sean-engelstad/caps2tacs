@@ -26,9 +26,9 @@ set       troot croot*thickRatio
 set       ttip ctip*thickRatio
 set       xtip sspan*tand(lesweep)
 set       ytip sspan*tand(dihedral)
-set       margin 0.02*cmean
-set       ybot -thickRatio*croot-margin
-set       ytop thickRatio*croot+ytip+margin
+set       margin 0.1*croot
+set       ybot -troot-margin
+set       ytop troot+ytip+margin
 box       0   0   0   croot   troot   0
 box       xtip   ytip   -sspan   ctip   ttip   0
 rotatez   -twist   0   0
