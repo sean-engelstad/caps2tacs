@@ -74,6 +74,18 @@ class Caps2Tacs:
         #store results - function values and full sensitivity
         self.storeResults()
     
+    def buildMesh(self, D=None):
+    	#used if you just want to build the .bdf and .dat files
+    	#for the mesh for this design
+    
+    	#update design with new desvar
+        if (not(D is None)):
+            design = self.makeDesignDict(D)
+            self.updateDesign(design)
+            
+        #run the tacs preanalysis
+        self.tacs.preAnalysis()
+        
     def makeDesignDict(self, D):
         D = np.array(D)
         designDict = {}
@@ -160,8 +172,8 @@ class Caps2Tacs:
         #open the file
         with open(sensFilename, "w") as f:
             
-            #write (nfunctions, nnodes) in first lien
-            f.write("{} {}\n".format(self.nfunc, self.nnodes))
+            #write (nfunctions) in first line
+            f.write("{}\n".format(self.nfunc))
             
             #for each function mass, stress, etc.
             for key in self.funcKeys:
@@ -169,10 +181,11 @@ class Caps2Tacs:
                 #get the pytacs/tacs sensitivity w.r.t. mesh for that function
                 cSens = self.sens[key]['Xpts']
                 
-                #write the value of the function
+                #write the key,value,nnodes of the function
                 f.write(key + "\n")
                 f.write("{}\n".format(self.func[key]))
-                
+                f.write("{}\n".format(self.nnodes))
+
                 #for each node, print nodeind, dfdx, dfdy, dfdz for that mesh element
                 for nodeind in range(self.nnodes): # d(Func1)/d(xyz)
                     
@@ -241,6 +254,7 @@ class Caps2Tacs:
                 
                 fdGrad = (func2-func1)/2/h
                 cgrad = mygrad(x)
+                print(cgrad)
                 #print(mygrad,p)
                 directDeriv = np.dot(cgrad, p)
                 
