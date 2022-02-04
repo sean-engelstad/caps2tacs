@@ -12,8 +12,8 @@ def capsFunction(egadsAim,tacsAim):
     #setup function for panel.csm
     
     #Egads Aim section, for mesh
-    egadsAim.input.Edge_Point_Min = 20
-    egadsAim.input.Edge_Point_Max = 25
+    egadsAim.input.Edge_Point_Min = 10
+    egadsAim.input.Edge_Point_Max = 15
     
     egadsAim.input.Mesh_Elements = "Quad"
     
@@ -318,7 +318,7 @@ class Optimization(ParOpt.Problem):
         massKey, stressKey, compKey = self.getNames()
 
         fail = 0
-        obj = self.problem.func[massKey] #mass
+        obj = self.problem.func[compKey] #mass
 
         #maxConstr = 2000.0 - self.problem.func[stressKey]
         con = [] #vmstress
@@ -337,7 +337,7 @@ class Optimization(ParOpt.Problem):
         massKey, stressKey, compKey = self.getNames()
         
         fail = 0
-        g[:] = self.problem.grad[massKey]
+        g[:] = self.problem.grad[compKey]
         
         #A[0][:] = -1 * self.problem.grad[stressKey]
         
@@ -352,13 +352,13 @@ class Optimization(ParOpt.Problem):
         iterations = np.arange(0,niter)
         plt.plot(iterations, self.objs, 'k-')
         plt.xlabel('Iteration #')
-        plt.ylabel('mass obj')
+        plt.ylabel('compliance obj')
         plt.show()
 
 ## Optimization problem defined here ##
 
 #run options: check, run, eval
-option = "run"
+option = "check"
 
 myOpt = Optimization()
 

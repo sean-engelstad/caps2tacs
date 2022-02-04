@@ -1,4 +1,4 @@
-21 0 0
+21 0 3
 Proj_Name
 Property
 Material
@@ -20,3 +20,6 @@ Support
 Connect
 Parameter
 Mesh
+load_set_001_compliance
+load_set_001_ks_vmfailure
+load_set_001_wing_mass

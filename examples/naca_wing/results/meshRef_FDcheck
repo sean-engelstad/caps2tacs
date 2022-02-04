@@ -1,0 +1,28 @@
+Finite Difference Gradient Checks for 
+
+Gradient Check #1
+EPmin = 5
+EPmax = 10
+Tess_Params = [.25,.01,15]
+h = 1e-6
+Mass RE = 8.3e-5
+Stress RE = 1e0
+Compliance RE = 1e0
+
+Gradient Check #2
+EPmin = 20
+EPmax = 25
+Tess_Params = [.25,.01,15]
+h = 1e-6
+Mass RE = 8.3e-5
+Stress RE = 20e0
+Compliance RE = 8e-3
+
+Gradient Check #3
+EPmin = 20
+EPmax = 25
+Tess_Params = [.25,.01,15]
+h = 1e-4
+Mass RE = 8.3e-5
+Stress RE = 1e-5
+Compliance RE = 1e-6

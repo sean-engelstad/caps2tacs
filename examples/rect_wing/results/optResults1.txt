@@ -1,0 +1,22 @@
+Starting Design:
+area: 40.00
+aspect: 6.00
+taper: 0.500
+twist: 5.00
+lesweep: 30.00
+dihedral: 5.00
+thickRatio: 0.1200
+
+Final design: 
+area: 20.000000002698453
+aspect: 4.267642687350014
+taper: 0.38940048602300514
+twist: 9.999999901177265
+lesweep: 22.366826881436793
+dihedral: 6.119381492267706
+thickRatio: 0.062382221808573744
+
+Objective Value:  Mass = 1474.0396387835335
+Constraint Value(s):  [stressMargin = -0.3717493823886697]
+#comment: my original max stress was too low
+

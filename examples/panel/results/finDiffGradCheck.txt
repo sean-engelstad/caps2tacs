@@ -1,0 +1,5 @@
+Panel Case FD check about D = [1.0,1.0]
+
+mass FD gradient error -9.658331561788757e-11
+stress FD gradient error -4.658949566893828e-06
+

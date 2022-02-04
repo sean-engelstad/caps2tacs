@@ -5,6 +5,8 @@ from paropt import ParOpt
 from mpi4py import MPI
 from tacs.pytacs import pyTACS
 from tacs import functions
+import numpy as np
+import matplotlib.pyplot as plt
 
 def capsFunction(egadsAim,tacsAim):
     #setup function for panel.csm
@@ -107,9 +109,13 @@ class Optimization(ParOpt.Problem):
         self.problem = Caps2Tacs("panel.csm", capsFunction, pytacsFunction, desvarList)
         
         nvar = 2 #number of design var
-        ncon = 2
+        #ncon = 2
+        ncon = 0
         nblock = 1
         super(Optimization, self).__init__(MPI.COMM_SELF, nvar, ncon, nblock)
+
+        self.objs = []
+        self.cons = []
     def getVarsAndBounds(self, x, lb, ub):
         """Get the variable values and bounds"""
         lb[:] = 1e-3
@@ -136,11 +142,13 @@ class Optimization(ParOpt.Problem):
         massKey, stressKey = self.getNames()
 
         fail = 0
-        obj = self.problem.func[massKey] #mass
+        obj = self.problem.func[stressKey] #mass
+        self.objs.append(obj)
 
-        maxConstr = 2.0 - self.problem.func[stressKey]
-        minConstr = self.problem.func[stressKey] - 0.5
-        con = [maxConstr,minConstr] #vmstress
+        #maxConstr = 2.0 - self.problem.func[stressKey]
+        #minConstr = self.problem.func[stressKey] - 0.5
+        #con = [maxConstr,minConstr] #vmstress
+        con = []
 
         return fail, obj, con
 
@@ -154,11 +162,11 @@ class Optimization(ParOpt.Problem):
         massKey, stressKey = self.getNames()
         
         fail = 0
-        g[:] = self.problem.grad[massKey]
+        g[:] = self.problem.grad[stressKey]
         
-        stress_grad = self.problem.grad[stressKey]
-        A[0][:] = -stress_grad
-        A[1][:] = stress_grad
+        #stress_grad = self.problem.grad[stressKey]
+        #A[0][:] = -stress_grad
+        #A[1][:] = stress_grad
         
         return fail
     def printObjCon(self, x):
@@ -166,11 +174,18 @@ class Optimization(ParOpt.Problem):
         print("\n")
         print("Objective Value: ",obj)
         print("Constraint Value(s): ",con)
+    def plotObjectiveProgress(self):
+        niter = len(self.objs)
+        iterations = np.arange(0,niter)
+        plt.plot(iterations, self.objs, 'k-')
+        plt.xlabel('Iteration #')
+        plt.ylabel('stress obj')
+        plt.show()
 
 ## Optimization problem defined here ##
 
 #run options: check, run
-option = "run"
+option = "check"
     
 myOpt = Optimization()
 
@@ -197,7 +212,7 @@ if (option == "check"):
     funcs = [mass,stress]
     gradients = [massGrad,stressGrad]
     names = ["mass","stress"]
-    myOpt.problem.checkGradients(x,funcs,gradients,names)
+    myOpt.problem.checkGradients(x,funcs,gradients,names,h=1e-4)
     
 elif (option == "run"):
    
@@ -216,3 +231,5 @@ elif (option == "run"):
     print("\n")
     print("Final Design: ")
     myOpt.problem.printDesignVariables(x[:])
+
+    myOpt.plotObjectiveProgress()

@@ -1,0 +1,44 @@
+=======================================
+Initial Design:
+area: 40.00
+aspect: 6.00
+taper: 0.5
+twist: 5.0
+lesweep: 30.00
+dihedral: 5.00
+mass_obj: 3100
+stress_obj: 1.7
+comp_obj: 
+========================================
+Mass Minimization:
+Objective Value:  1415.179449274748
+Final design: 
+area: 20.000000001696318
+aspect: 9.999999987063871
+taper: 0.9182933937807808
+twist: 9.999999774538724
+lesweep: 3.0000007520385075
+dihedral: 1.0000021066986444
+=========================================
+Stress Minimization:
+Objective Value:  0.21899839637831192
+area: 99.99974736756242
+aspect: 3.0000024631229905
+taper: 0.30000088284788845
+twist: 9.998607272673032
+lesweep: 24.91782046901811
+dihedral: 1.0004313885053724
+=========================================
+Compliance Minimization:
+Objective Value:  1196.8312723692356
+Constraint Value(s):  []
+
+
+Final design: 
+area: 20.00000040673721
+aspect: 3.000000000210643
+taper: 0.30000000015986583
+twist: 1.000003880200084
+lesweep: 11.940274820079528
+dihedral: 4.132180240105818
+

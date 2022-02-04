@@ -12,8 +12,8 @@ def capsFunction(egadsAim,tacsAim):
     #setup function for panel.csm
     
     #Egads Aim section, for mesh
-    egadsAim.input.Edge_Point_Min = 5
-    egadsAim.input.Edge_Point_Max = 10
+    egadsAim.input.Edge_Point_Min = 12
+    egadsAim.input.Edge_Point_Max = 15
     
     egadsAim.input.Mesh_Elements = "Quad"
     
@@ -209,7 +209,7 @@ class Optimization(ParOpt.Problem):
         self.problem = Caps2Tacs("rect_wing.csm", capsFunction, pytacsFunction, desvarList)
         
         self.nvar = 7 #number of design var
-        ncon = 1
+        ncon = 0
         nblock = 1
         super(Optimization, self).__init__(MPI.COMM_SELF, self.nvar, ncon, nblock)
         
@@ -247,9 +247,10 @@ class Optimization(ParOpt.Problem):
         fail = 0
         obj = self.problem.func[massKey] #mass
 
-        maxStress = 0.35
-        maxConstr = maxStress - self.problem.func[stressKey]
-        con = [maxConstr] #vmstress
+        #maxStress = 0.35
+        #maxConstr = maxStress - self.problem.func[stressKey]
+        #con = [maxConstr] #vmstress
+        con = []
         
         self.objs.append(obj)
 
@@ -267,7 +268,7 @@ class Optimization(ParOpt.Problem):
         fail = 0
         g[:] = self.problem.grad[massKey]
         
-        A[0][:] = -self.problem.grad[stressKey]
+        #A[0][:] = -self.problem.grad[stressKey]
         
         return fail
     def printObjCon(self, x):

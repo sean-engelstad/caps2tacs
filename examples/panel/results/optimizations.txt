@@ -1,0 +1,37 @@
+Initial Design:
+Objective mass
+Objective Value:  1.797712302293592
+w/ constraints [maxStressCon, minStressCon]
+Constraint Value(s):  [1.500000000002522, -2.5219271115872743e-12]
+
+
+Final Design: 
+plateLength: 0.3677207441404597
+plateWidth: 0.2909998589022807
+============================================
+Stress-constrained Mass minimization
+Objective mass
+Objective Value:  1.797712302293592
+w/ constraints [maxStressCon, minStressCon]
+Constraint Value(s):  [1.500000000002522, -2.5219271115872743e-12]
+
+
+Final Design: 
+plateLength: 0.3677207441404597
+plateWidth: 0.2909998589022807
+=========================================
+Mass minimization
+Objective Value:  1.7208632423473523e-05
+
+Final Design: 
+plateLength: 0.0010120886119607494
+plateWidth: 0.0010120886119607498
+
+==========================================
+Stress minimization
+Objective Value:  -0.003415738797574605
+
+Final Design: 
+plateLength: 0.0010002025737320026
+plateWidth: 0.0010002025737320026
+===========================================

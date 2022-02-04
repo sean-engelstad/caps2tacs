@@ -1,0 +1,12 @@
+#mesh test 1
+#goal is to determine how functions & derivatives change when you slightly change the mesh design
+#D -> D+dD (change in design variables)
+#x -> x + dx (change in mesh positions, but also sometimes more coordinates & topology change of mesh)
+#In this case, from D to D+dD, the mesh lost two nodes & edges and thus changed T the mesh topology. I believe the change df due to dT for 2 nodes/9000 nodes is larger than the df from dD~1e-6 and therefore the finite diff is flawed.
+#this raises another issue: if we slightly change D during optimization like ~1e-3 the mesh is probably more likely to change than with dD~1e-6. So that would make our estimated gradients very much wrong. 
+#the only way to fix that is if the mesh is converged enough that for most of the design space D, the mesh topology is fixed T, even though it uses automatic mesh generation. Potential issues: if you slightly change D, but there is a point of high curvature which changes & then 
+
+#here we have the following mesh generation parameters (like #edges/
+egadsAim.input.Edge_Point_Min = 5
+egadsAim.input.Edge_Point_Max = 10
+egadsAim.input.Tess_Params = [.25,.01,15]
