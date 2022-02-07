@@ -15,7 +15,16 @@ class Caps2Tacs:
 
         #order of design variables used for optimization
         self.desvars = desvars
-            
+
+        self.ngeomDV = 0
+        self.nthickDV = 0
+        for desvar in self.desvars:
+            if ("thick" in desvar):
+                self.nthickDV += 1
+            else:
+                self.ngeomDV += 1
+        self.nvar = self.ngeomDV + self.nthickDV
+
         #initialize the tacs and egads aims
         self.initAims(csmFile, capsFunction)
         
@@ -92,10 +101,51 @@ class Caps2Tacs:
         for i in range(len(D)):
             designDict[self.desvars[i]] = D[i]
         return designDict
+
     def updateDesign(self, designDict, output=False):
+        #print out the design variables
         if (output): print("Design variables: ", designDict)
-        for key in designDict:
-            self.geom.despmtr[key].value = designDict[key]
+
+        #grab the property dictionary to edit thick DVs
+        propDict = self.tacs.input.Property
+        capsDesDict = self.tacs.input.Design_Variable
+
+        #loop over each design variable
+        for deskey in designDict:
+
+            #assume all thickness desvars are thick##
+            isThickDV = ("thick" in deskey) or ("T" in deskey)
+            if (isThickDV):
+                capsGroup = capsDesDict[deskey]["groupName"]
+                thickness = designDict[deskey]
+                capsDesDict[deskey] = self.makeThicknessDV(capsGroup,thickness)
+                propDict[capsGroup]["membraneThickness"] = thickness
+
+            #otherwise it's a geometric desvar
+            else:
+                self.geom.despmtr[deskey].value = designDict[deskey]
+            
+        #update the new property dictionary w/ thicknesses
+        self.tacs.input.Property = propDict
+        self.tacs.input.Design_Variable = capsDesDict
+
+    def makeThicknessDV(self,capsGroup, thickness):
+        desvar    = {"groupName" : capsGroup,
+              "initialValue" : thickness,
+              "lowerBound" : thickness*0.5,
+              "upperBound" : thickness*1.5,
+              "maxDelta"   : thickness*0.1,
+              "fieldName" : "T"}
+        return desvar
+
+    def thickDVs(self):
+        #something with thick DVs
+        DVname = "thick"
+        newThickness = 2 * thickness
+        capsGroup = tacsAIM.input.Design_Variable[DVname]["groupName"]
+        prop = tacsAIM.input.Property
+        prop[capsGroup]["membraneThickness"] = newThickness
+        tacsAIM.input.Property = prop
     
     def runTACS(self):
         #build the BDF and data file with CAPS preanalysis
@@ -199,11 +249,10 @@ class Caps2Tacs:
         
         #run aim postanalysis
         self.tacs.postAnalysis()
-        print("finished postanalysis\n")
+        #print("finished postanalysis\n")
     
     def storeResults(self):
         #store the function and full df/dD sensitivities from CAPS aim dynout attributes
-        
         #initialize gradient variable
         self.grad = {}
         
@@ -211,19 +260,33 @@ class Caps2Tacs:
         for key in self.funcKeys:
             self.func[key] = self.tacs.dynout[key].value
             self.grad[key] = np.zeros((self.nvar))
-            
+            #print(len(self.grad[key]))
+
             #loop over each design variable to get the full df/dD gradient
             ind = 0
             for desvar in self.desvars:
-                self.grad[key][ind] = self.tacs.dynout[key].deriv(desvar)
+                isThickDV = ("thick" in deskey) or ("T" in deskey)
+                if (isThickDV):
+                    #use struct here, #print(self.sens[key]['struct'])
+                    #struct includes geomDVs in same order
+                    self.grad[key][ind] = self.sens[key]['struct'][ind]
+                else:
+                    self.grad[key][ind] = self.tacs.dynout[key].deriv(desvar)
                 ind += 1
         #print("finished storing results\n")
         #print(self.grad)
+
     def printDesignVariables(self, desvar):
         ind = 0
         for desvarName in self.desvars:
             print("{}: {}".format(desvarName, desvar[ind]))
             ind += 1
+
+    def printResults(self):
+        for key in self.funcKeys:
+            print("function {}, value {}".format(key, self.func[key]))
+            print("gradient {}, value {}".format(key, self.grad[key]))
+
     def checkGradients(self, x, functions, gradients, names,h=1e-4):
     	#computes finite difference check for functions and gradients
     	#that you provide to it
@@ -254,7 +317,7 @@ class Caps2Tacs:
                 
                 fdGrad = (func2-func1)/2/h
                 cgrad = mygrad(x)
-                print(cgrad)
+                print("func {}, grad {}".format(name, cgrad))
                 #print(mygrad,p)
                 directDeriv = np.dot(cgrad, p)
                 

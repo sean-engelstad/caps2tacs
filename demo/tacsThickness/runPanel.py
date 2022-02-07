@@ -40,7 +40,7 @@ def capsFunction(egadsAim,tacsAim):
     
     # Material properties section
     shell  = {"propertyType" : "Shell",
-              "membraneThickness" : 0.006,
+              "membraneThickness" : 0.01,
               "material"        : "madeupium",
               "bendingInertiaRatio" : 1.0, # Default
               "shearMembraneRatio"  : 5.0/6.0} # Default
@@ -64,9 +64,26 @@ def capsFunction(egadsAim,tacsAim):
     # Set loads
     tacsAim.input.Load = {"appliedPressure": load }
     
-    #design variables
-    tacsAim.input.Design_Variable = {"plateLength" : {},
-    								"plateWidth" : {}}
+    #geom design variables
+    DVdict = {}
+    geomDVs = ["plateLength","plateWidth"]
+    for geomDV in geomDVs:
+        DVdict[geomDV] = {}
+
+    #thick design variables
+    def makeThicknessDV(capsGroup, thickness):
+      desvar    = {"groupName" : capsGroup,
+              "initialValue" : thickness,
+              "lowerBound" : thickness*0.5,
+              "upperBound" : thickness*1.5,
+              "maxDelta"   : thickness*0.1,
+              "fieldName" : "T"}
+      return desvar
+
+    thickDV = makeThicknessDV("plate",0.01)
+    DVdict["thick"] = thickDV
+        
+    tacsAim.input.Design_Variable = DVdict
     
 def pytacsFunction(obj, datFile):
     #locally defined method that runs pytacs with your desired functions
@@ -105,22 +122,27 @@ def pytacsFunction(obj, datFile):
 #ParOpt Optimization Class
 class Optimization(ParOpt.Problem):
     def __init__(self):
-        desvarList = ["plateLength", "plateWidth"]
+        desvarList = ["plateLength", "plateWidth","thick"]
         self.problem = Caps2Tacs("panel.csm", capsFunction, pytacsFunction, desvarList)
         
-        nvar = 2 #number of design var
-        #ncon = 2
-        ncon = 0
+        nvar = 3 #number of design var
+        ncon = 1
         nblock = 1
         super(Optimization, self).__init__(MPI.COMM_SELF, nvar, ncon, nblock)
 
         self.objs = []
         self.cons = []
+        self.start = True
+
     def getVarsAndBounds(self, x, lb, ub):
         """Get the variable values and bounds"""
-        lb[:] = 1e-3
-        ub[:] = 3.0
-        x[:] = 0.95
+        lbs = [0.1, 0.1, 0.01]
+        ubs = [1.0, 1.0, 0.1]
+        xs = [0.5, 0.5, 0.05]
+        for i in range(3):
+            lb[i] = lbs[i]
+            ub[i] = ubs[i]
+            x[i] = xs[i]
         return
     def getNames(self):
         massStr = ""
@@ -136,19 +158,23 @@ class Optimization(ParOpt.Problem):
         """
         Return the objective, constraint and fail flag
         """
+        con = np.zeros(1, dtype=ParOpt.dtype)
+
         #run the solver
         self.problem.solveStructuralProblem(x[:])
         
         massKey, stressKey = self.getNames()
 
+        #setup initial max stress
+        if (self.start):
+            self.maxStress = 2 * self.problem.func[stressKey]
+            self.start = False
+
         fail = 0
-        obj = self.problem.func[stressKey] #mass
+        obj = self.problem.func[massKey] #mass
         self.objs.append(obj)
 
-        #maxConstr = 2.0 - self.problem.func[stressKey]
-        #minConstr = self.problem.func[stressKey] - 0.5
-        #con = [maxConstr,minConstr] #vmstress
-        con = []
+        con[0] = 1 - self.problem.func[stressKey] / self.maxStress
 
         return fail, obj, con
 
@@ -162,12 +188,11 @@ class Optimization(ParOpt.Problem):
         massKey, stressKey = self.getNames()
         
         fail = 0
-        g[:] = self.problem.grad[stressKey]
-        
-        #stress_grad = self.problem.grad[stressKey]
-        #A[0][:] = -stress_grad
-        #A[1][:] = stress_grad
-        
+        g[:] = self.problem.grad[massKey]
+        print(g[:])
+        A[0][:] = -1 * self.problem.grad[stressKey] / self.maxStress
+        print(A[0][:])
+
         return fail
     def printObjCon(self, x):
         fail, obj, con = self.evalObjCon(x)
@@ -184,8 +209,8 @@ class Optimization(ParOpt.Problem):
 
 ## Optimization problem defined here ##
 
-#run options: check, run
-option = "check"
+#run options: check, run, eval
+option = "run"
     
 myOpt = Optimization()
 
@@ -208,7 +233,7 @@ if (option == "check"):
         massKey, stressKey = myOpt.getNames()
         return myOpt.problem.grad[stressKey]
     
-    x = [1.0, 1.0 ]
+    x = [1.0, 1.0, 0.01 ]
     funcs = [mass,stress]
     gradients = [massGrad,stressGrad]
     names = ["mass","stress"]
@@ -216,9 +241,22 @@ if (option == "check"):
     
 elif (option == "run"):
    
+    # options = {
+    # 'algorithm': 'mma',
+    # 'mma_init_asymptote_offset': 0.5,
+    # 'mma_min_asymptote_offset': 0.01,
+    # 'mma_max_iterations': 20}
+    filename = "paropt.out"
     options = {
-        'algorithm': 'mma'}
-    
+        'algorithm': 'ip',
+        'abs_res_tol': 1e-4,
+        'starting_point_strategy': 'affine_step',
+        'barrier_strategy': 'monotone',
+        'start_affine_multiplier_min': 0.01,
+        'penalty_gamma': 1000.0,
+        'qn_subspace_size': 10,
+        'qn_type': 'bfgs',
+        'output_file': filename}
     # Set up the optimizer
     opt = ParOpt.Optimizer(myOpt, options)
     
@@ -233,3 +271,16 @@ elif (option == "run"):
     myOpt.problem.printDesignVariables(x[:])
 
     myOpt.plotObjectiveProgress()
+
+elif (option == "eval"):
+
+    D1 = [1.0,1.0,0.05]
+    D2 = [1.0, 1.0, 0.04]
+    D3 = [1.0,1.0, 0.03]
+
+    myOpt.problem.solveStructuralProblem(D1[:])
+    myOpt.problem.printResults()
+    myOpt.problem.solveStructuralProblem(D2[:])
+    myOpt.problem.printResults()
+    myOpt.problem.solveStructuralProblem(D3[:])
+    myOpt.problem.printResults()

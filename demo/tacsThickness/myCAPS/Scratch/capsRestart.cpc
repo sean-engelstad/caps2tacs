@@ -1,0 +1,26 @@
+# /home/sengelstad6/git/caps2tacs/demo/tacsThickness/myCAPS/Scratch/capsRestart.cpc written by ocsmSave (v1.21)
+
+# Constant, Design, and Output Parameters:
+despmtr   plateLength       0.50000
+despmtr   plateWidth       1.00000
+
+# Global Attributes:
+
+# Branches:
+skbeg     0   0   0   0
+   linseg    plateLength   0   0
+skend     0
+extrude   0   plateWidth   0
+select    face
+attribute capsGroup   $plate
+attribute capsLoad   $plate
+select    body
+attribute capsAIM   $egadsTessAIM;tacsAIM
+patbeg    i   4
+   select    edge   i
+attribute capsConstraint   $edge
+   select    node   i
+attribute capsConstraint   $edge
+patend
+
+end
