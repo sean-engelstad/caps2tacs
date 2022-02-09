@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
-from caps2tacs import Caps2Tacs
+from caps2tacs import *
 from paropt import ParOpt
 from mpi4py import MPI
 from tacs.pytacs import pyTACS
@@ -77,27 +77,43 @@ def capsFunction(egadsAim,tacsAim):
                                      
     #geom design variables
     DVdict = {}
+    DVRdict = {}
     geomDVs = ["area","aspect", "taper", "twist", "lesweep", "dihedral"]
     capsGroups = ["rib", "spar", "OML"]
-    thickDVs = ["ribT", "sparT", "OMLT"]
+    thickDVs = ["thick1", "thick2", "thick3"]
     thick0 = 0.02
     for geomDV in geomDVs:
         DVdict[geomDV] = {}
 
     #thick design variables
-    def makeThicknessDV(capsGroup, thickness):
-      desvar    = {"groupName" : capsGroup,
-              "initialValue" : thickness,
-              "lowerBound" : thickness*0.5,
-              "upperBound" : thickness*1.5,
-              "maxDelta"   : thickness*0.1,
-              "fieldName" : "T"}
-      return desvar
+    # def makeThicknessDV(capsGroup, thickness):
+    #   desvar    = {"groupName" : capsGroup,
+    #           "initialValue" : thickness,
+    #           "lowerBound" : thickness*0.5,
+    #           "upperBound" : thickness*1.5,
+    #           "maxDelta"   : thickness*0.1,
+    #           "fieldName" : "T"}
+    #           #"variableType" : "Property"}
+    #   return desvar
+    # def makeThicknessDVR(capsGroup):
+    #     DVR = {"variableType": "Property",
+    #     "fieldName" : "T",
+    #     "constantCoeff" : 0.0,
+    #     "groupName" : capsGroup,
+    #     "linearCoeff" : 1.0}
+    #     return DVR
 
+    useDVR = True
     for i in range(3):
-        DVdict[thickDVs[i]] = makeThicknessDV(capsGroups[i],thick0)
+        if (useDVR):
+            DVRdict[thickDVs[i]] = makeThicknessDVR(capsGroups[i])
+        else:
+            DVdict[thickDVs[i]] = makeThicknessDV(capsGroups[i],thick0)
         
-    tacsAim.input.Design_Variable = DVdict
+    
+    tacsAim.input.Design_Variable = DVdict   
+    if (useDVR): tacsAim.input.Design_Variable_Relation = DVRdict
+        
 
 def pytacsFunction(obj, datFile):
     useMPI = True
@@ -147,7 +163,7 @@ def pytacsFunction(obj, datFile):
 #ParOpt Optimization Class
 class Optimization(ParOpt.Problem):
     def __init__(self):
-        desvarList = ["area","aspect","taper","twist","lesweep","dihedral","ribT", "sparT", "OMLT"]
+        desvarList = ["area","aspect","taper","twist","lesweep","dihedral","thick1", "thick2", "thick3"]
         self.problem = Caps2Tacs("naca_thick.csm", capsFunction, pytacsFunction, desvarList)
         
         self.nvar = 9 #number of design var

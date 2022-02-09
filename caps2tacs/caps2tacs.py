@@ -102,23 +102,50 @@ class Caps2Tacs:
             designDict[self.desvars[i]] = D[i]
         return designDict
 
+    #methods to be called outside of the class
+    def makeThicknessDV(self, capsGroup, thickness):
+        desvar    = {"groupName" : capsGroup,
+              "initialValue" : thickness,
+              "lowerBound" : thickness*0.5,
+              "upperBound" : thickness*1.5,
+              "maxDelta"   : thickness*0.1,
+              "fieldName" : "T"}
+        return desvar
+    def makeThicknessDVR(self, capsGroup):
+        DVR = {"variableType": "Property",
+        "fieldName" : "T",
+        "constantCoeff" : 0.0,
+        "groupName" : capsGroup,
+        "linearCoeff" : 1.0}
+        return DVR
+
     def updateDesign(self, designDict, output=False):
         #print out the design variables
         if (output): print("Design variables: ", designDict)
 
+        #use DesignVarRelations or DesignVariable
+        useDVR = True
+
         #grab the property dictionary to edit thick DVs
         propDict = self.tacs.input.Property
-        capsDesDict = self.tacs.input.Design_Variable
+        if (useDVR):
+            DVRdict = self.tacs.input.Design_Variable_Relation
+        else:
+            DVdict = self.tacs.input.Design_Variable
 
         #loop over each design variable
         for deskey in designDict:
 
             #assume all thickness desvars are thick##
-            isThickDV = ("thick" in deskey) or ("T" in deskey)
-            if (isThickDV):
-                capsGroup = capsDesDict[deskey]["groupName"]
+            if ("thick" in deskey):
+                if (useDVR):
+                    capsGroup = DVRdict[deskey]["groupName"]
+                    DVRdict[deskey] = self.makeThicknessDVR(capsGroup)
+                else:
+                    capsGroup = DVdict[deskey]["groupName"]
+                    DVdict[deskey] = self.makeThicknessDV(capsGroup,thickness)
+
                 thickness = designDict[deskey]
-                capsDesDict[deskey] = self.makeThicknessDV(capsGroup,thickness)
                 propDict[capsGroup]["membraneThickness"] = thickness
 
             #otherwise it's a geometric desvar
@@ -127,25 +154,10 @@ class Caps2Tacs:
             
         #update the new property dictionary w/ thicknesses
         self.tacs.input.Property = propDict
-        self.tacs.input.Design_Variable = capsDesDict
-
-    def makeThicknessDV(self,capsGroup, thickness):
-        desvar    = {"groupName" : capsGroup,
-              "initialValue" : thickness,
-              "lowerBound" : thickness*0.5,
-              "upperBound" : thickness*1.5,
-              "maxDelta"   : thickness*0.1,
-              "fieldName" : "T"}
-        return desvar
-
-    def thickDVs(self):
-        #something with thick DVs
-        DVname = "thick"
-        newThickness = 2 * thickness
-        capsGroup = tacsAIM.input.Design_Variable[DVname]["groupName"]
-        prop = tacsAIM.input.Property
-        prop[capsGroup]["membraneThickness"] = newThickness
-        tacsAIM.input.Property = prop
+        if (useDVR):
+            self.tacs.input.Design_Variable_Relation = DVRdict
+        else:
+            self.tacs.input.Design_Variable = DVdict
     
     def runTACS(self):
         #build the BDF and data file with CAPS preanalysis
