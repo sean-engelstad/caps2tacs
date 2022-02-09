@@ -103,14 +103,16 @@ def capsFunction(egadsAim,tacsAim):
 
     useDVR = True
     for i in range(3):
+        #make Design_Variable_Relations
         if (useDVR):
             DVRdict[thickDVs[i]] = makeThicknessDVR(capsGroups[i])
-        else:
-            DVdict[thickDVs[i]] = makeThicknessDV(capsGroups[i],thick0)
+        
+        #also make Design_Variables
+        DVdict[thickDVs[i]] = makeThicknessDV(capsGroups[i],thick0)
         
     
     tacsAim.input.Design_Variable = DVdict   
-    if (useDVR): tacsAim.input.Design_Variable_Relation = DVRdict
+    if useDVR: tacsAim.input.Design_Variable_Relation = DVRdict
 
 def pytacsFunction(obj, datFile):
     useMPI = True

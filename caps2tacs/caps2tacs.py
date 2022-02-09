@@ -128,24 +128,30 @@ class Caps2Tacs:
 
         #grab the property dictionary to edit thick DVs
         propDict = self.tacs.input.Property
+        
+        #grab the DVR dict if using relations
         if (useDVR):
             DVRdict = self.tacs.input.Design_Variable_Relation
-        else:
-            DVdict = self.tacs.input.Design_Variable
+        
+        #grab the DVdict to update it
+        DVdict = self.tacs.input.Design_Variable
 
         #loop over each design variable
         for deskey in designDict:
 
             #assume all thickness desvars are thick##
             if ("thick" in deskey):
+                thickness = designDict[deskey]
+
                 if (useDVR):
                     capsGroup = DVRdict[deskey]["groupName"]
                     DVRdict[deskey] = self.makeThicknessDVR(capsGroup)
-                else:
-                    capsGroup = DVdict[deskey]["groupName"]
-                    DVdict[deskey] = self.makeThicknessDV(capsGroup,thickness)
 
-                thickness = designDict[deskey]
+                #also update the DVs too
+                capsGroup = DVdict[deskey]["groupName"]
+                DVdict[deskey] = self.makeThicknessDV(capsGroup,thickness)
+
+                
                 propDict[capsGroup]["membraneThickness"] = thickness
 
             #otherwise it's a geometric desvar
@@ -154,10 +160,13 @@ class Caps2Tacs:
             
         #update the new property dictionary w/ thicknesses
         self.tacs.input.Property = propDict
+
+        #update DVR dictionary
         if (useDVR):
             self.tacs.input.Design_Variable_Relation = DVRdict
-        else:
-            self.tacs.input.Design_Variable = DVdict
+        
+        #update DV dictionary
+        self.tacs.input.Design_Variable = DVdict
     
     def runTACS(self):
         #build the BDF and data file with CAPS preanalysis
@@ -277,8 +286,7 @@ class Caps2Tacs:
             #loop over each design variable to get the full df/dD gradient
             ind = 0
             for desvar in self.desvars:
-                isThickDV = ("thick" in deskey) or ("T" in deskey)
-                if (isThickDV):
+                if ("thick" in desvar):
                     #use struct here, #print(self.sens[key]['struct'])
                     #struct includes geomDVs in same order
                     self.grad[key][ind] = self.sens[key]['struct'][ind]
