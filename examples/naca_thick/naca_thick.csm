@@ -31,11 +31,7 @@ set  ytop 0.2*croot+ytip+margin
 #make two base airfoils
 udprim  naca Series series
 scale  croot
-select face
-	attribute capsGroup !$rib+0
 udprim  naca Series series
-select face
-	attribute capsGroup !$rib+1
 scale		ctip
 rotatez		-twist	0		0
 translate	xtip	ytip	-sspan
@@ -43,7 +39,8 @@ loft		0
 attribute	OML	0
 
 #store OML of wing
-dump	OML.egads	1
+store OML
+#dump	OML.egads	1
    
 #spar parameters
 set 	ctipEff		ctip*cosd(twist)
@@ -82,23 +79,23 @@ patend
 
 #fillet 0.1 191
 
-#trim ribs and spars to OML 
-import OML.egads
+#trim ribs and spars to OML
+#import OML.egads
+restore OML
 intersect
 
-import OML.egads
+#import OML.egads
+restore OML
 hollow 0
 select face
 	attribute capsGroup $OML
 union
 
-
-#select face
-#	attribute capsGroup $wing
-
+#capsAIM attribute
 select body
 	attribute capsAIM $egadsTessAIM;tacsAIM
 
+#capsConstraint arrays
 dimension rootFaces 1 4
 cfgpmtr rootFaces "131;130;142;148"
 dimension rootEdges 1 11
@@ -107,6 +104,8 @@ dimension bottomFaces 1 36
 cfgpmtr bottomFaces "125;122;137;145;109;106;123;138;93;90;107;124;77;74;91;108;58;53;75;92;37;32;54;76;16;12;33;55;3;2;14;35;17;15;36;57"
 dimension rootNodes 1 9
 cfgpmtr rootNodes "81;75;74;82;78;87;85;90;89"
+
+#capsConstraint and capsLoad
 patbeg find 4
    select face !rootFaces[1,find]
        attribute capsConstraint $wingRoot

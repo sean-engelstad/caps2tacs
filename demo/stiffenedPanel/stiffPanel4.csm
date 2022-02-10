@@ -1,0 +1,100 @@
+#csm file for Rohan
+# Design Parameters
+despmtr   plateLength       2.0
+despmtr   plateWidth        3.0
+despmtr stiffHeight         0.1
+
+cfgpmtr nx 1
+cfgpmtr ny 8
+cfgpmtr nstiff 4
+
+dimension edges1 1 5
+cfgpmtr edges1 "147;35;131;82;111"
+dimension nodes1 1 6
+cfgpmtr  nodes1 "75;56;3;26;9;83"
+
+
+dimension edges2 1 5
+cfgpmtr edges2 "161;144;137;130;123"
+dimension nodes2 1 6
+cfgpmtr nodes2 "90;23;41;53;71;81"
+
+
+set nx2 nx*(nstiff+1)
+set Lx plateLength/nx2
+set Ly plateWidth/ny
+set dxStiff plateLength/(nstiff+1)
+
+# plate segments
+mark
+patbeg ix nx2
+    patbeg iy ny
+        set plateInd ix+nx2*(iy-1)
+        skbeg (ix-1)*Lx (iy-1)*Ly 0
+            linseg ix*Lx (iy-1)*Ly 0
+        skend 0
+        extrude 0 Ly 0
+        
+        select face
+         attribute capsGroup !$plate+iy
+    patend
+patend
+join 0 1
+store plate
+   
+patbeg istiff nstiff
+    mark
+    patbeg iy ny
+        set stiffInd istiff+nstiff*(iy-1)
+        skbeg istiff*dxStiff (iy-1)*Ly 0
+            linseg istiff*dxStiff iy*Ly 0
+        skend 0
+        extrude 0 0 -stiffHeight
+        select face
+         attribute capsGroup !$stiffener+stiffInd
+    patend
+    join 0 1
+    restore plate
+    join
+    store plate
+patend
+restore plate
+   
+   
+select face
+   attribute capsGroup !$plate+iy
+select body
+   attribute capsAIM $egadsTessAIM;tacsAIM
+   
+patbeg i 5
+   select edge !edges1[1,i]
+   	   attribute capsConstraint $edge1
+   	   attribute capsLoad $edge1
+patend
+patbeg i 6
+   select node !nodes1[1,i]
+   	   attribute capsConstraint $edge1
+   	   attribute capsLoad $edge1
+patend 
+   
+   
+patbeg i 6
+   select node !nodes2[1,i]
+   	   attribute capsConstraint $edge2
+   	   attribute capsLoad $edge2
+patend 
+
+patbeg j 5
+   select edge !edges2[1,j]
+       attribute capsConstraint $edge2
+patend
+
+#translation x y z
+translate 0.0 0.0 0.0
+   
+#xrotation deg, yc,zc
+rotatex 90.0 0.0 0.0
+#yrotation deg, zc,xc
+rotatey 0.0 0.0 0.0
+#xrotation deg, xc,yc
+rotatez 0.0 0.0 0.0

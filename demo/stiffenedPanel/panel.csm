@@ -1,0 +1,13 @@
+#Stiff panel prototype geometry
+#By: Sean Engelstad
+
+# Design Parameters
+despmtr   plateLength       2.0
+despmtr   plateWidth        3.0
+
+#alternative to make the panel is to use the box operation
+
+skbeg 0 0 0
+ linseg plateLength 0 0
+skend 0
+extrude 0 plateWidth 0
