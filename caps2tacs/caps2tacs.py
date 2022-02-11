@@ -108,14 +108,13 @@ class Caps2Tacs:
               "initialValue" : thickness,
               "lowerBound" : thickness*0.5,
               "upperBound" : thickness*1.5,
-              "maxDelta"   : thickness*0.1,
-              "fieldName" : "T"}
+              "maxDelta"   : thickness*0.1}
         return desvar
-    def makeThicknessDVR(self, capsGroup):
+    def makeThicknessDVR(self, DVname):
         DVR = {"variableType": "Property",
         "fieldName" : "T",
         "constantCoeff" : 0.0,
-        "groupName" : capsGroup,
+        "groupName" : DVname,
         "linearCoeff" : 1.0}
         return DVR
 
@@ -145,7 +144,7 @@ class Caps2Tacs:
 
                 if (useDVR):
                     capsGroup = DVRdict[deskey]["groupName"]
-                    DVRdict[deskey] = self.makeThicknessDVR(capsGroup)
+                    DVRdict[deskey] = self.makeThicknessDVR(deskey)
 
                 #also update the DVs too
                 capsGroup = DVdict[deskey]["groupName"]

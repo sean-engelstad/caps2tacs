@@ -12,15 +12,14 @@ def makeThicknessDV(capsGroup, thickness):
           "initialValue" : thickness,
           "lowerBound" : thickness*0.5,
           "upperBound" : thickness*1.5,
-          "maxDelta"   : thickness*0.1,
-          "fieldName" : "T"}
+          "maxDelta"   : thickness*0.1}
     return desvar
 
-def makeThicknessDVR(capsGroup):
+def makeThicknessDVR(DVname):
     DVR = {"variableType": "Property",
     "fieldName" : "T",
     "constantCoeff" : 0.0,
-    "groupName" : capsGroup,
+    "groupName" : DVname,
     "linearCoeff" : 1.0}
     return DVR
 
@@ -105,7 +104,7 @@ def capsFunction(egadsAim,tacsAim):
     for i in range(3):
         #make Design_Variable_Relations
         if (useDVR):
-            DVRdict[thickDVs[i]] = makeThicknessDVR(capsGroups[i])
+            DVRdict[thickDVs[i]] = makeThicknessDVR(thickDVs[i])
         
         #also make Design_Variables
         DVdict[thickDVs[i]] = makeThicknessDV(capsGroups[i],thick0)
