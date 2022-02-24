@@ -1,0 +1,28 @@
+#	NMakefile for udpKulfan
+#
+IDIR  = $(ESP_ROOT)\include
+!include $(IDIR)\$(ESP_ARCH).$(MSVC)
+LDIR  = $(ESP_ROOT)\lib
+BDIR  = $(ESP_ROOT)\bin
+!ifdef ESP_BLOC
+ODIR  = $(ESP_BLOC)\obj
+!else
+ODIR  = .
+!endif
+
+$(LDIR)\kulfan.dll:	$(ODIR)\udpKulfan.obj
+	-del $(LDIR)\kulfan.dll
+	link /out:$(LDIR)\kulfan.dll /dll /def:udp.def \
+		$(ODIR)\udpKulfan.obj $(LDIR)\ocsm.lib $(LDIR)\egads.lib
+	$(MCOMP) /manifest $(LDIR)\kulfan.dll.manifest \
+		/outputresource:$(LDIR)\kulfan.dll;2
+
+$(ODIR)\udpKulfan.obj:	udpKulfan.c $(IDIR)\udpUtilities.c $(IDIR)\udpUtilities.h
+	cl /c $(COPTS) $(DEFINE) /I$(IDIR) \
+		udpKulfan.c /Fo$(ODIR)\udpKulfan.obj
+
+clean:
+	-del $(ODIR)\udpKulfan.obj
+
+cleanall:	clean
+	-del $(LDIR)\kulfan.dll

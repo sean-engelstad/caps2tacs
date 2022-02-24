@@ -1,1 +1,3 @@
-getFilenames|
+open|naca_thick.csm|
+build|0|
+getCsmFile|naca_thick.csm|

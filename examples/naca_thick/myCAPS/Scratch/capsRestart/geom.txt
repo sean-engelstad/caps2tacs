@@ -1,5 +1,4 @@
-13 0
-series
+16 0
 nspar
 nrib
 area
@@ -8,6 +7,10 @@ taper
 twist
 lesweep
 dihedral
+tc0
+tcf
+camb0
+cambf
 rootFaces
 rootEdges
 bottomFaces

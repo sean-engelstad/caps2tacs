@@ -1,0 +1,84 @@
+interface ID        in  0
+interface intent    in  1
+interface area in 0
+interface aspect in 0
+interface taper in 0
+interface twist in 0
+interface lesweep in 0
+interface dihedral in 0
+interface classR in 0
+interface ztailR in 0
+interface aupperR in 0
+interface alowerR in 0
+interface classT in 0
+interface ztailT in 0
+interface aupperT in 0
+interface alowerT in 0
+interface nspar in 0
+interface nrib in 0
+
+#internal parameters
+set  cmean sqrt(area/aspect)
+set  span cmean*aspect
+set  sspan span/2
+set  croot 2*cmean/(1+taper)
+set  ctip croot*taper
+set  xtip sspan*tand(lesweep)
+set  ytip sspan*tand(dihedral)
+set  margin 0.02*cmean
+set  ybot -0.2*croot-margin
+set  ytop 0.2*croot+ytip+margin
+
+#make two base airfoils
+udparg    kulfan    class     classR
+udparg    kulfan    ztail     ztailR
+udparg    kulfan    aupper    aupperR
+udprim    kulfan    alower    alowerR
+scale  croot
+udparg    kulfan    class     classT
+udparg    kulfan    ztail     ztailT
+udparg    kulfan    aupper    aupperT
+udprim    kulfan    alower    alowerT
+scale		ctip
+rotatez		-twist	0		0
+translate	xtip	ytip	-sspan
+loft		0
+attribute OML 0
+
+#store OML of wing
+store OML
+   
+#spar parameters
+set 	ctipEff		ctip*cosd(twist)
+
+#spars
+patbeg		ispar		nspar
+	set		frac		ispar/(nspar+1)
+	set		dx			frac*(croot-ctipEff)-xtip
+	set		hyp			sqrt(sspan*sspan+dx*dx)
+	box 0 ybot +margin 0 ytop-ybot -hyp-2*margin
+	set		localSweep	atand(dx/sspan)
+	rotatey localSweep 0 0
+	translate	frac*croot	0	0
+	
+patend
+
+#ribs
+patbeg		irib		nrib
+	set		dxmax		max(croot,xtip+ctipEff)+2*margin
+	set		zcoord		-(irib)*sspan/(nrib+1)
+	box 0 ybot zcoord dxmax ytop-ybot 0
+	
+	union
+    patbeg      foo  ifzero(irib-1,nspar-1,0)
+        union
+    patend
+	#union with previous
+patend 
+
+restore OML
+intersect
+
+restore OML
+hollow 0
+union

@@ -1,0 +1,36 @@
+# test my wing udc
+
+dimension classR     1  2  1
+dimension ztailR     1  2  1
+dimension aupperR    1  6  1
+dimension alowerR    1  6  1
+
+dimension classT     1  2  1
+dimension ztailT     1  2  1
+dimension aupperT    1  6  1
+dimension alowerT    1  6  1
+
+despmtr area 40
+despmtr aspect 10
+despmtr taper 0.2
+despmtr twist 5
+despmtr lesweep 5
+despmtr dihedral 5
+
+despmtr   classR     "0.5;    1.0;"
+despmtr   ztailR     "0.0012; -.0012;"
+despmtr   aupperR    "0.2216; 0.2207; 0.3254; 0.1852; 0.3102; 0.2410; 0.2887;"
+despmtr   alowerR    "-.1822; -.0783; -.0176; -.0676; -.0048; -.0190; -.0050;"
+
+despmtr   classT     "0.5;    1.0;"
+despmtr   ztailT     "0.0012; -.0012;"
+despmtr   aupperT    "0.2216; 0.2207; 0.3254; 0.1852; 0.3102; 0.2410; 0.2887;"
+despmtr   alowerT    "-.1822; -.0783; -.0176; -.0676; -.0048; -.0190; -.0050;"
+
+   udparg    $/wing    nrib 8 nspar 3
+   udparg    $/wing    area area aspect aspect taper taper
+   udparg    $/wing    twist twist lesweep lesweep dihedral dihedral
+   udparg    $/wing    classR classR ztailR ztailR aupperR aupperR
+   udparg    $/wing    alowerR alowerR
+   udparg    $/wing    classT classT ztailT ztailT aupperT aupperT
+   udprim    $/wing    alowerT alowerT

@@ -1,0 +1,23 @@
+# autosave.csm written by ocsmSave (v1.21)
+
+# Constant, Design, and Output Parameters:
+dimension class   1   2
+despmtr   class[1,:]   "     0.20000;     1.00000;"
+dimension ztail   1   2
+despmtr   ztail[1,:]   "     0.00120;    -0.00120;"
+dimension aupper   1   4
+despmtr   aupper[1,:]   "     0.21390;     0.50000;     0.23540;     0.28700;"
+dimension alower   1   4
+despmtr   alower[1,:]   "    -0.12430;    -0.30000;    -0.03720;    -0.20000;"
+despmtr   span       2.00000
+
+# Global Attributes:
+
+# Branches:
+udparg    kulfan   class   class
+udparg    kulfan   ztail   ztail
+udparg    kulfan   aupper   aupper
+udprim    kulfan   alower   alower
+extrude   0   0   span
+
+end

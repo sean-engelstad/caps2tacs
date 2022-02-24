@@ -1,7 +1,6 @@
 # /home/sengelstad6/git/caps2tacs/examples/naca_thick/myCAPS/Scratch/capsRestart.cpc written by ocsmSave (v1.21)
 
 # Constant, Design, and Output Parameters:
-cfgpmtr   series    8412.00000
 cfgpmtr   nspar       3.00000
 cfgpmtr   nrib       8.00000
 despmtr   area      40.00000
@@ -10,6 +9,10 @@ despmtr   taper       0.50000
 despmtr   twist       5.00000
 despmtr   lesweep      30.00000
 despmtr   dihedral       5.00000
+despmtr   tc0       0.04000
+despmtr   tcf       0.04000
+despmtr   camb0       0.00000
+despmtr   cambf       0.00000
 cfgpmtr   rootFaces     131.00000
 cfgpmtr   rootEdges     200.00000
 cfgpmtr   bottomFaces     125.00000
@@ -28,9 +31,9 @@ set       ytip sspan*tand(dihedral)
 set       margin 0.02*cmean
 set       ybot -0.2*croot-margin
 set       ytop 0.2*croot+ytip+margin
-udprim    naca   Series   series
+udprim    naca   thickness   tc0   Camber   camb0
 scale     croot   0   0   0
-udprim    naca   Series   series
+udprim    naca   thickness   tcf   Camber   cambf
 scale     ctip   0   0   0
 rotatez   -twist   0   0
 translate xtip   ytip   -sspan

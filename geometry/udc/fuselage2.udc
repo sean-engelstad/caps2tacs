@@ -1,0 +1,45 @@
+interface ID        in  0
+interface intent    in  1
+interface xloc      in  0
+interface yloc      in  0
+interface width     in  0
+interface topHeight in  0
+interface botHeight in  0
+interface order in 0
+
+set       numXsect  xloc.ncol
+
+   # intermediate sections
+   patbeg isect numXsect-1
+      mark
+      #super ellipse i
+      udprim    supell    rx  width[isect]  ry_s  botHeight[isect]  ry_n  topHeight[isect]  n  order[isect]
+      rotatey -90 0 0
+      translate xloc[isect]  yloc[isect] 0
+         
+      #super ellipse i+1
+      udprim    supell    rx  width[isect+1]  ry_s  botHeight[isect+1]  ry_n  topHeight[isect+1] n   order[isect+1]  
+      rotatey -90 0 0
+      translate xloc[isect+1]  yloc[isect+1] 0
+      
+      #make the solid lofts
+      loft 0
+      ifthen isect eq 1
+         store fuselage
+      else
+         restore fuselage
+         union
+         store fuselage
+      endif
+   patend
+restore fuselage
+
+hollow 0
+
+patbeg jsect numXsect-2
+   set isect jsect+1
+   udprim    supell    rx  width[isect]  ry_s  botHeight[isect]  ry_n  topHeight[isect]  n  order[isect]
+   rotatey -90 0 0
+   translate xloc[isect]  yloc[isect] 0
+   union
+patend

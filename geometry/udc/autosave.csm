@@ -1,0 +1,38 @@
+# autosave.csm written by ocsmSave (v1.21)
+
+# Constant, Design, and Output Parameters:
+dimension classR   1   2
+despmtr   classR[1,:]   "     0.50000;     1.00000;"
+dimension ztailR   1   2
+despmtr   ztailR[1,:]   "     0.00120;    -0.00120;"
+dimension aupperR   1   6
+despmtr   aupperR[1,:]   "     0.22160;     0.40000;     0.32540;     0.18520;     0.31020;     0.24100;"
+dimension alowerR   1   6
+despmtr   alowerR[1,:]   "    -0.18220;    -0.07830;    -0.01760;    -0.06760;    -0.10000;    -0.01900;"
+dimension classT   1   2
+despmtr   classT[1,:]   "     0.50000;     1.00000;"
+dimension ztailT   1   2
+despmtr   ztailT[1,:]   "     0.00120;    -0.00120;"
+dimension aupperT   1   6
+despmtr   aupperT[1,:]   "     0.22160;     0.22070;     0.32540;     0.18520;     0.31020;     0.24100;"
+dimension alowerT   1   6
+despmtr   alowerT[1,:]   "    -0.18220;    -0.07830;    -0.01760;    -0.06760;    -0.00480;    -0.01900;"
+despmtr   area     100.00000
+despmtr   aspect      20.00000
+despmtr   taper       0.60000
+despmtr   twist       5.00000
+despmtr   lesweep      20.00000
+despmtr   dihedral      20.00000
+
+# Global Attributes:
+
+# Branches:
+udparg    $/wing   nrib   8   nspar   3
+udparg    $/wing   area   area   aspect   aspect   taper   taper
+udparg    $/wing   twist   twist   lesweep   lesweep   dihedral   dihedral
+udparg    $/wing   classR   classR   ztailR   ztailR   aupperR   aupperR
+udparg    $/wing   alowerR   alowerR
+udparg    $/wing   classT   classT   ztailT   ztailT   aupperT   aupperT
+udprim    $/wing   alowerT   alowerT
+
+end
