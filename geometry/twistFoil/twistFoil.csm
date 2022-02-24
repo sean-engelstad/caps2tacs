@@ -1,0 +1,24 @@
+# design0o2 (kulfan2)
+# written by John Dannenhoffer
+
+despmtr toverc 0.1
+despmtr twistAOA 30
+despmtr twistMag 0.4
+despmtr phaseShift 10
+
+despmtr   span      2.0
+
+mark
+   udparg    TwistFoil tover toverc
+   udparg    TwistFoil twistAOA twistAOA
+   udparg    TwistFoil twistMag twistMag
+   udprim    TwistFoil phaseShift phaseShift
+
+   udparg    TwistFoil tover toverc
+   udparg    TwistFoil twistAOA twistAOA
+   udparg    TwistFoil twistMag twistMag
+   udprim    TwistFoil phaseShift phaseShift
+   translate 0  0  span
+rule
+
+end

@@ -21,7 +21,7 @@
 #define TWISTMAG_DOT(IUDP,I)  ((double *) (udps[IUDP].arg[2].dot))[I]
 #define PHASESHIFT(    IUDP,I)  ((double *) (udps[IUDP].arg[3].val))[I]
 #define PHASESHIFT_DOT(IUDP,I)  ((double *) (udps[IUDP].arg[3].dot))[I]
-#define NUMPTS    (IUDP  )  ((int    *) (udps[IUDP].arg[4].val))[0]
+#define NUMPTS(IUDP  )  ((int    *) (udps[IUDP].arg[4].val))[0]
 
 /* data about possible arguments */
 static char*  argNames[NUMUDPARGS] = {"toverc",    "twistAOA",  "twistMag",  "phaseShift", "numpts"};

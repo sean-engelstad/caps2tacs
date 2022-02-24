@@ -11,9 +11,9 @@ ODIR  = .
 endif
 
 $(LDIR)/kulfan.so:	$(ODIR)/udpTwistFoil.o
-	touch $(LDIR)/kulfan.so
-	rm $(LDIR)/kulfan.so
-	$(CC) $(SOFLGS) -o $(LDIR)/kulfan.so $(ODIR)/udpTwistFoil.o \
+	touch $(LDIR)/twistFoil.so
+	rm $(LDIR)/twistFoil.so
+	$(CC) $(SOFLGS) -o $(LDIR)/twistFoil.so $(ODIR)/udpTwistFoil.o \
 		-L$(LDIR) -legads -lm $(RPATH)
 
 $(ODIR)/udpTwistFoil.o:	udpTwistFoil.c $(IDIR)/udpUtilities.c $(IDIR)/udpUtilities.h
@@ -34,4 +34,4 @@ clean:
 	(cd $(ODIR); rm -f udpTwistFoil.o )
 
 cleanall:	clean
-	(cd $(LDIR); rm -f kulfan.so )
+	(cd $(LDIR); rm -f twistFoil.so )
