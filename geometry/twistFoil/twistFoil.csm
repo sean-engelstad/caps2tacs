@@ -9,15 +9,15 @@ despmtr phaseShift 10
 despmtr   span      2.0
 
 mark
-   udparg    TwistFoil tover toverc
-   udparg    TwistFoil twistAOA twistAOA
-   udparg    TwistFoil twistMag twistMag
-   udprim    TwistFoil phaseShift phaseShift
+   udparg   udpTwistFoil tover toverc
+   udparg    udpTwistFoil twistAOA twistAOA
+   udparg   udpTwistFoil twistMag twistMag
+   udprim   udpTwistFoil phaseShift phaseShift
 
-   udparg    TwistFoil tover toverc
-   udparg    TwistFoil twistAOA twistAOA
-   udparg    TwistFoil twistMag twistMag
-   udprim    TwistFoil phaseShift phaseShift
+   udparg    twistFoil tover toverc
+   udparg    twistFoil twistAOA twistAOA
+   udparg    twistFoil twistMag twistMag
+   udprim    twistFoil phaseShift phaseShift
    translate 0  0  span
 rule
 
