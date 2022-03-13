@@ -24,6 +24,11 @@ class Caps2Tacs:
             else:
                 self.ngeomDV += 1
         self.nvar = self.ngeomDV + self.nthickDV
+        
+        if (self.nthickDV == 0):
+            self.hasThickDVs = False
+        else:
+            self.hasThickDVs = True
 
         #initialize the tacs and egads aims
         self.initAims(csmFile, capsFunction)
@@ -129,7 +134,7 @@ class Caps2Tacs:
         propDict = self.tacs.input.Property
         
         #grab the DVR dict if using relations
-        if (useDVR):
+        if (useDVR and self.hasThickDVs):
             DVRdict = self.tacs.input.Design_Variable_Relation
         
         #grab the DVdict to update it
@@ -161,7 +166,7 @@ class Caps2Tacs:
         self.tacs.input.Property = propDict
 
         #update DVR dictionary
-        if (useDVR):
+        if (useDVR and self.hasThickDVs):
             self.tacs.input.Design_Variable_Relation = DVRdict
         
         #update DV dictionary
@@ -418,3 +423,19 @@ class Caps2Tacs:
                 ax.ylabel('change in f(D)')
                 ax.legend()
             plt.show()
+
+
+def getThicknessDV(capsGroup, thickness):
+    desvar    = {"groupName" : capsGroup,
+          "initialValue" : thickness,
+          "lowerBound" : thickness*0.5,
+          "upperBound" : thickness*1.5,
+          "maxDelta"   : thickness*0.1}
+    return desvar
+def getThicknessDVR(DVname):
+    DVR = {"variableType": "Property",
+    "fieldName" : "T",
+    "constantCoeff" : 0.0,
+    "groupName" : DVname,
+    "linearCoeff" : 1.0}
+    return DVR

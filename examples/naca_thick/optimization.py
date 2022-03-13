@@ -101,14 +101,13 @@ def capsFunction(egadsAim,tacsAim):
     #     "constantCoeff" : 0.0,
     #     "groupName" : capsGroup,
     #     "linearCoeff" : 1.0}
-    #     return DVR
+    #     return DV
 
     useDVR = True
     for i in range(3):
         if (useDVR):
-            DVRdict[thickDVs[i]] = makeThicknessDVR(capsGroups[i])
-        else:
-            DVdict[thickDVs[i]] = makeThicknessDV(capsGroups[i],thick0)
+            DVRdict[thickDVs[i]] = getThicknessDVR(thickDVs[i])
+        DVdict[thickDVs[i]] = getThicknessDV(capsGroups[i],thick0)
         
     
     tacsAim.input.Design_Variable = DVdict   

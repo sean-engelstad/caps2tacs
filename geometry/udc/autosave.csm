@@ -1,38 +1,240 @@
 # autosave.csm written by ocsmSave (v1.21)
 
 # Constant, Design, and Output Parameters:
-dimension classR   1   2
-despmtr   classR[1,:]   "     0.50000;     1.00000;"
-dimension ztailR   1   2
-despmtr   ztailR[1,:]   "     0.00120;    -0.00120;"
-dimension aupperR   1   6
-despmtr   aupperR[1,:]   "     0.22160;     0.40000;     0.32540;     0.18520;     0.31020;     0.24100;"
-dimension alowerR   1   6
-despmtr   alowerR[1,:]   "    -0.18220;    -0.07830;    -0.01760;    -0.06760;    -0.10000;    -0.01900;"
-dimension classT   1   2
-despmtr   classT[1,:]   "     0.50000;     1.00000;"
-dimension ztailT   1   2
-despmtr   ztailT[1,:]   "     0.00120;    -0.00120;"
-dimension aupperT   1   6
-despmtr   aupperT[1,:]   "     0.22160;     0.22070;     0.32540;     0.18520;     0.31020;     0.24100;"
-dimension alowerT   1   6
-despmtr   alowerT[1,:]   "    -0.18220;    -0.07830;    -0.01760;    -0.06760;    -0.00480;    -0.01900;"
-despmtr   area     100.00000
-despmtr   aspect      20.00000
-despmtr   taper       0.60000
+cfgpmtr   viewBodies       1.00000
+cfgpmtr   nfuse       4.00000
+dimension xlist   1   6
+despmtr   xlist[1,:]   "    -5.50000;    -5.00000;    -3.00000;     5.00000;    11.00000;    11.50000;"
+dimension ylist   1   6
+despmtr   ylist[1,:]   "     0.00000;     0.00000;     0.00000;     0.00000;     0.00000;     0.00000;"
+dimension wylist   1   4
+despmtr   wylist[1,:]   "     0.10000;     0.70000;     0.50000;     0.40000;"
+dimension wy2list   1   4
+despmtr   wy2list[1,:]   "     0.40000;     0.60000;     0.40000;     0.20000;"
+dimension wzlist   1   4
+despmtr   wzlist[1,:]   "     0.20000;     0.80000;     0.65000;     0.40000;"
+dimension nlist   1   4
+despmtr   nlist[1,:]   "     1.50000;     2.20000;     2.20000;     2.00000;"
+dimension tailRadius   1   2
+despmtr   tailRadius[1,:]   "     0.50000;     0.50000;"
+dimension noseRadius   1   2
+despmtr   noseRadius[1,:]   "     1.00000;     1.00000;"
+cfgpmtr   nspar       3.00000
+cfgpmtr   nrib       8.00000
+despmtr   area      40.00000
+despmtr   aspect       6.00000
+despmtr   taper       0.50000
 despmtr   twist       5.00000
-despmtr   lesweep      20.00000
-despmtr   dihedral      20.00000
+despmtr   lesweep      30.00000
+despmtr   dihedral       5.00000
+despmtr   tc0       0.10000
+despmtr   tcf       0.05000
+despmtr   camb0       0.10000
+despmtr   cambf       0.00000
+despmtr   zstart       0.60000
+despmtr   xstart       1.00000
+cfgpmtr   nspar2       3.00000
+cfgpmtr   nrib2       4.00000
+despmtr   area2       3.00000
+despmtr   aspect2       4.00000
+despmtr   taper2       0.50000
+despmtr   twist2       5.00000
+despmtr   lesweep2      10.00000
+despmtr   dihedral2       2.50000
+despmtr   tc02       0.05000
+despmtr   tcf2       0.02000
+despmtr   camb02       0.10000
+despmtr   cambf2       0.00000
+despmtr   zstart2       0.30000
+despmtr   xstart2      10.00000
+cfgpmtr   nspar3       3.00000
+cfgpmtr   nrib3       4.00000
+despmtr   area3       2.00000
+despmtr   aspect3       4.00000
+despmtr   taper3       0.50000
+despmtr   tc03       0.20000
+despmtr   tcf3       0.10000
+despmtr   yHtail       0.30000
 
 # Global Attributes:
 
 # Branches:
-udparg    $/wing   nrib   8   nspar   3
-udparg    $/wing   area   area   aspect   aspect   taper   taper
-udparg    $/wing   twist   twist   lesweep   lesweep   dihedral   dihedral
-udparg    $/wing   classR   classR   ztailR   ztailR   aupperR   aupperR
-udparg    $/wing   alowerR   alowerR
-udparg    $/wing   classT   classT   ztailT   ztailT   aupperT   aupperT
-udprim    $/wing   alowerT   alowerT
+udparg    $/fuselage3   xloc   xlist   yloc   ylist   width   wzlist   topHeight   wylist
+udparg    $/fuselage3   tailRadius   tailRadius   noseRadius   noseRadius
+udprim    $/fuselage3   botHeight   wy2list   order   nlist
+store     fuselage   0   0
+set       cmean sqrt(area/aspect)
+set       span cmean*aspect
+set       sspan span/2
+set       croot 2*cmean/(1+taper)
+set       ctip croot*taper
+set       xtip sspan*tand(lesweep)
+set       ytip sspan*tand(dihedral)
+set       margin 0.02*cmean
+set       ybot -0.2*croot-margin
+set       ytop 0.2*croot+ytip+margin
+udprim    naca   thickness   tc0   Camber   camb0
+scale     croot   0   0   0
+translate 0   0   -zstart
+udprim    naca   thickness   tcf   Camber   cambf
+scale     ctip   0   0   0
+rotatez   -twist   0   0
+translate xtip   ytip   -sspan-zstart
+loft      0
+attribute OML   0
+store     OML   0   0
+set       ctipEff ctip*cosd(twist)
+patbeg    ispar   nspar
+   set       frac ispar/(nspar+1)
+   set       dx frac*(croot-ctipEff)-xtip
+   set       hyp sqrt(sspan*sspan+dx*dx)
+   box       0   ybot   -zstart+margin   0   ytop-ybot   -hyp-2*margin
+   set       localSweep atand(dx/sspan)
+   rotatey   localSweep   0   0
+   translate frac*croot   0   0
+   select    face
+attribute capsGroup   !$spar
+attribute spar   ispar
+patend
+patbeg    irib   nrib
+   set       dxmax max(croot,xtip+ctipEff)+2*margin
+   set       zcoord -zstart-(irib)*sspan/(nrib+1)
+   box       0   ybot   zcoord   dxmax   ytop-ybot   0
+   select    face
+attribute capsGroup   !$rib
+   union     0   0   0
+   patbeg    foo   ifzero(irib-1,nspar-1,0)
+      union     0   0   0
+   patend
+patend
+restore   OML   0
+intersect none   1   0
+restore   OML   0
+hollow    0   0   0
+select    face
+attribute capsGroup   $OML
+union     0   0   0
+translate xstart   0   0
+store     rightWing   0   0
+restore   rightWing   0
+mirror    0   0   1   0
+store     leftWing   0   0
+set       cmean2 sqrt(area2/aspect2)
+set       span2 cmean2*aspect2
+set       sspan2 span2/2
+set       croot2 2*cmean2/(1+taper2)
+set       ctip2 croot2*taper2
+set       xtip2 sspan2*tand(lesweep2)
+set       ytip2 sspan2*tand(dihedral2)
+set       margin2 0.02*cmean2
+set       ybot2 -0.2*croot2-margin2
+set       ytop2 0.2*croot2+ytip2+margin2
+udprim    naca   thickness   tc02   Camber   camb02
+scale     croot2   0   0   0
+translate xstart2   0   -zstart2
+udprim    naca   thickness   tcf2   Camber   cambf2
+scale     ctip2   0   0   0
+rotatez   -twist2   0   0
+translate xstart2+xtip2   ytip2   -sspan2-zstart2
+loft      0
+attribute OML2   0
+store     OML2   0   0
+set       ctipEff2 ctip2*cosd(twist2)
+patbeg    ispar   nspar2
+   set       frac ispar/(nspar2+1)
+   set       dx frac*(croot2-ctipEff2)-xtip2
+   set       hyp sqrt(sspan2*sspan2+dx*dx)
+   box       0   ybot2   -zstart2+margin2   0   ytop2-ybot2   -hyp-2*margin2
+   set       localSweep atand(dx/sspan2)
+   rotatey   localSweep   0   0
+   translate frac*croot2+xstart2   0   0
+   select    face
+attribute capsGroup   !$sparT
+patend
+patbeg    irib   nrib2
+   set       dxmax max(croot2,xtip2+ctipEff2)+2*margin2
+   set       zcoord -zstart2-(irib)*sspan2/(nrib2+1)
+   box       0   ybot2   zcoord   dxmax   ytop2-ybot2   0
+   translate xstart2   0   0
+   select    face
+attribute capsGroup   !$ribT
+   union     0   0   0
+   patbeg    foo   ifzero(irib-1,nspar2-1,0)
+      union     0   0   0
+   patend
+patend
+restore   OML2   0
+intersect none   1   0
+restore   OML2   0
+hollow    0   0   0
+select    face
+attribute capsGroup   $OML
+union     0   0   0
+store     rightTail   0   0
+restore   rightTail   0
+mirror    0   0   1   0
+store     leftTail   0   0
+set       cmean3 sqrt(area3/aspect3)
+set       span3 cmean3*aspect3
+set       sspan3 span3/2
+set       croot3 2*cmean3/(1+taper3)
+set       ctip3 croot3*taper3
+set       margin3 0.02*cmean3
+set       ybot3 -0.2*croot3-margin3
+set       ytop3 0.2*croot3+margin3
+udprim    naca   thickness   tc03   Camber   0
+scale     croot3   0   0   0
+udprim    naca   thickness   tcf3   Camber   0
+scale     ctip3   0   0   0
+translate 0   0   -sspan3
+loft      0
+attribute OML3   0
+store     OML3   0   0
+patbeg    ispar   nspar3
+   set       frac ispar/(nspar3+1)
+   set       dx frac*(croot3-ctip3)
+   set       hyp sqrt(sspan3*sspan3+dx*dx)
+   box       0   ybot3   margin3   0   ytop3-ybot3   -hyp-2*margin3
+   set       localSweep atand(dx/sspan3)
+   rotatey   localSweep   0   0
+   translate frac*croot3   0   0
+   select    face
+attribute capsGroup   !$sparT
+patend
+patbeg    irib   nrib3
+   set       dxmax croot3+2*margin3
+   set       zcoord -(irib)*sspan3/(nrib3+1)
+   box       0   ybot3   zcoord   dxmax   ytop3-ybot3   0
+   translate 0   0   0
+   select    face
+attribute capsGroup   !$ribT
+   union     0   0   0
+   patbeg    foo   ifzero(irib-1,nspar3-1,0)
+      union     0   0   0
+   patend
+patend
+restore   OML3   0
+intersect none   1   0
+restore   OML3   0
+hollow    0   0   0
+select    face
+attribute capsGroup   $OML3
+union     0   0   0
+rotatex   90   0   0
+translate xstart2   yHtail   0
+store     vertTail   0   0
+restore   rightWing   0
+restore   leftWing   0
+restore   rightTail   0
+restore   leftTail   0
+restore   vertTail   0
+restore   fuselage   0
+patbeg    foo   5
+   union     0   0   0
+patend
+store     fighter   0   0
+patbeg    foo   ifzero(viewBodies,0,1)
+   restore   fighter   0
+patend
 
 end

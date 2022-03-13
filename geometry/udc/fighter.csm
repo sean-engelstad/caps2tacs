@@ -1,0 +1,314 @@
+#Full fighter.csm written by Sean Engelstad, inpsired by John Dannenhoffer fighter
+
+#viewing config parameters
+cfgpmtr viewBodies 1
+
+#generate the fuselage
+cfgpmtr nfuse 4
+dimension xlist 1 nfuse
+despmtr xlist "-5.0;-3;5;11.0"
+#set xlist[1,4] zstart2+croot2
+dimension ylist 1 nfuse
+despmtr ylist "-0.2;0;0;0"
+dimension wylist 1 nfuse
+despmtr wylist "0.1;1.0;0.7;0.4"
+dimension wy2list 1 nfuse
+despmtr wy2list "0.1;0.6;0.4;0.2"
+dimension wzlist 1 nfuse
+despmtr wzlist "0.2;0.8;0.65;0.4"
+dimension nlist 1 nfuse
+despmtr nlist "1.5;2.2;2.2;2"
+udparg $/fuselage2 xloc xlist yloc ylist width wzlist topHeight wylist
+udprim $/fuselage2 botHeight wy2list order nlist
+
+store fuselage
+
+#wing design & config parameters
+cfgpmtr  nspar  3  -
+cfgpmtr  nrib  8  -
+despmtr  area  40  len^2
+despmtr  aspect  6.0  -
+despmtr  taper  0.5  -
+despmtr  twist  5.0  deg
+despmtr  lesweep  30.0 deg
+despmtr  dihedral 5.0  deg
+despmtr tc0 0.1
+despmtr tcf 0.05
+despmtr camb0 0.1
+despmtr cambf 0.0
+despmtr zstart 0.6
+despmtr xstart 1.0
+
+#internal parameters
+set  cmean sqrt(area/aspect)
+set  span cmean*aspect
+set  sspan span/2
+set  croot 2*cmean/(1+taper)
+set  ctip croot*taper
+set  xtip sspan*tand(lesweep)
+set  ytip sspan*tand(dihedral)
+set  margin 0.02*cmean
+set  ybot -0.2*croot-margin
+set  ytop 0.2*croot+ytip+margin
+
+#make two base airfoils
+udprim  naca thickness tc0 Camber camb0
+scale  croot
+translate 0 0 -zstart
+udprim  naca thickness tcf Camber cambf
+scale		ctip
+rotatez		-twist	0		0
+translate	xtip	ytip	-sspan-zstart
+loft		0
+attribute	OML	0
+
+#store OML of wing
+store OML
+#dump	OML.egads	1
+   
+#spar parameters
+set 	ctipEff		ctip*cosd(twist)
+
+#spars
+patbeg		ispar		nspar
+	#import OML.egads	
+	set		frac		ispar/(nspar+1)
+	set		dx			frac*(croot-ctipEff)-xtip
+	set		hyp			sqrt(sspan*sspan+dx*dx)
+	box 0 ybot -zstart+margin 0 ytop-ybot -hyp-2*margin
+	set		localSweep	atand(dx/sspan)
+	rotatey localSweep 0 0
+	translate	frac*croot	0	0
+	select face
+		attribute capsGroup !$spar
+	attribute spar ispar
+	
+	#we leave spars un-unioned here
+patend
+
+#ribs
+patbeg		irib		nrib
+	set		dxmax		max(croot,xtip+ctipEff)+2*margin
+	set		zcoord		-zstart-(irib)*sspan/(nrib+1)
+	box 0 ybot zcoord dxmax ytop-ybot 0
+	select face
+		attribute capsGroup !$rib
+	
+	union
+    patbeg      foo  ifzero(irib-1,nspar-1,0)
+        union
+    patend
+	#union with previous
+patend 
+
+
+
+#fillet 0.1 191
+
+#trim ribs and spars to OML
+#import OML.egads
+restore OML
+intersect
+
+#import OML.egads
+restore OML
+hollow 0
+select face
+	attribute capsGroup $OML
+union
+
+translate xstart 0 0
+
+store rightWing
+restore rightWing
+mirror 0 0 1 0
+store leftWing
+
+#horizontal tail design & config parameters
+cfgpmtr  nspar2  3  -
+cfgpmtr  nrib2  4  -
+despmtr  area2  3  len^2
+despmtr  aspect2  4.0  -
+despmtr  taper2  0.5  -
+despmtr  twist2  5.0  deg
+despmtr  lesweep2  10.0 deg
+despmtr  dihedral2 2.5  deg
+despmtr tc02 0.05
+despmtr tcf2 0.02
+despmtr camb02 0.1
+despmtr cambf2 0.0
+despmtr zstart2 0.3
+despmtr xstart2 10
+
+#internal parameters
+set  cmean2 sqrt(area2/aspect2)
+set  span2 cmean2*aspect2
+set  sspan2 span2/2
+set  croot2 2*cmean2/(1+taper2)
+set  ctip2 croot2*taper2
+set  xtip2 sspan2*tand(lesweep2)
+set  ytip2 sspan2*tand(dihedral2)
+set  margin2 0.02*cmean2
+set  ybot2 -0.2*croot2-margin2
+set  ytop2 0.2*croot2+ytip2+margin2
+
+#make two base airfoils
+udprim  naca thickness tc02 Camber camb02
+scale  croot2
+translate xstart2 0 -zstart2
+udprim  naca thickness tcf2 Camber cambf2
+scale		ctip2
+rotatez		-twist2	0		0
+translate	xstart2+xtip2	ytip2	-sspan2-zstart2
+loft		0
+attribute	OML2	0
+
+#store OML of wing
+store OML2
+#dump	OML.egads	1
+   
+#spar parameters
+set 	ctipEff2		ctip2*cosd(twist2)
+
+#spars
+patbeg		ispar		nspar2
+	#import OML.egads	
+	set		frac		ispar/(nspar2+1)
+	set		dx			frac*(croot2-ctipEff2)-xtip2
+	set		hyp			sqrt(sspan2*sspan2+dx*dx)
+	box 0 ybot2 -zstart2+margin2 0 ytop2-ybot2 -hyp-2*margin2
+	set		localSweep	atand(dx/sspan2)
+	rotatey localSweep 0 
+	translate	frac*croot2+xstart2	0	0
+	select face
+		attribute capsGroup !$sparT
+	
+	#we leave spars un-unioned here
+patend
+
+#ribs
+patbeg		irib		nrib2
+	set		dxmax		max(croot2,xtip2+ctipEff2)+2*margin2
+	set		zcoord		-zstart2-(irib)*sspan2/(nrib2+1)
+	box 0 ybot2 zcoord dxmax ytop2-ybot2 0
+   translate xstart2 0 0
+	select face
+		attribute capsGroup !$ribT
+	
+	union
+    patbeg      foo  ifzero(irib-1,nspar2-1,0)
+        union
+    patend
+	#union with previous
+patend 
+#--- 
+restore OML2
+intersect
+
+#import OML.egads
+restore OML2
+hollow 0
+select face
+	attribute capsGroup $OML
+union
+
+store rightTail
+restore rightTail
+mirror 0 0 1 0
+store leftTail
+
+#vert tail design and config parameters
+cfgpmtr  nspar3  3  -
+cfgpmtr  nrib3  4  -
+despmtr  area3  2  len^2
+despmtr  aspect3  4.0  -
+despmtr  taper3  0.5  -
+despmtr tc03 0.2
+despmtr tcf3 0.1
+despmtr yHtail 0.3
+
+#internal parameters
+set  cmean3 sqrt(area3/aspect3)
+set  span3 cmean3*aspect3
+set  sspan3 span3/2
+set  croot3 2*cmean3/(1+taper3)
+set  ctip3 croot3*taper3
+set  margin3 0.02*cmean3
+set  ybot3 -0.2*croot3-margin3
+set  ytop3 0.2*croot3+margin3
+
+#make two base airfoils
+udprim  naca thickness tc03 Camber 0
+scale  croot3
+udprim  naca thickness tcf3 Camber 0
+scale		ctip3
+translate	0	0	-sspan3
+loft		0
+attribute	OML3	0
+
+#store OML of wing
+store OML3
+#dump	OML.egads	1
+
+#--- #spars
+patbeg		ispar		nspar3
+	#import OML.egads	
+	set		frac		ispar/(nspar3+1)
+	set		dx			frac*(croot3-ctip3)
+	set		hyp			sqrt(sspan3*sspan3+dx*dx)
+	box 0 ybot3 margin3 0 ytop3-ybot3 -hyp-2*margin3
+	set		localSweep	atand(dx/sspan3)
+	rotatey localSweep 0 
+	translate	frac*croot3	0	0
+	select face
+		attribute capsGroup !$sparT
+	
+	#we leave spars un-unioned here
+patend
+
+#ribs
+patbeg		irib		nrib3
+	set		dxmax		croot3+2*margin3
+	set		zcoord		-(irib)*sspan3/(nrib3+1)
+	box 0 ybot3 zcoord dxmax ytop3-ybot3 0
+   translate 0 0 0
+	select face
+		attribute capsGroup !$ribT
+	
+	union
+    patbeg      foo  ifzero(irib-1,nspar3-1,0)
+        union
+    patend
+	#union with previous
+patend 
+
+restore OML3
+intersect
+
+#import OML.egads
+restore OML3
+hollow 0
+select face
+	attribute capsGroup $OML3
+union
+
+rotatex 90 0 0
+translate xstart2 yHtail 0
+store vertTail
+
+#restore all the bodies
+restore rightWing
+restore leftWing
+restore rightTail
+restore leftTail
+restore vertTail
+restore fuselage
+patbeg foo 5
+   union
+patend
+store fighter
+
+#view all the bodies
+patbeg foo ifzero(viewBodies,0,1)
+	restore fighter
+patend

@@ -1,0 +1,526 @@
+# autosave.csm written by ocsmSave (v1.21)
+
+# Constant, Design, and Output Parameters:
+cfgpmtr   output_format       1.00000
+cfgpmtr   output_num       1.00000
+despmtr   refArea   315172.17390
+despmtr   sweep_TE_i      -5.00000
+despmtr   sweep_TE_o       5.00000
+despmtr   twist_r       0.00000
+despmtr   twist_m       0.04789
+despmtr   twist_t      -6.00000
+despmtr   taper_ratio_i       0.50000
+despmtr   taper_ratio_o       0.26078
+despmtr   AR       2.51413
+despmtr   rel_y_m       0.40000
+despmtr   dihedral_i       5.00000
+despmtr   dihedral_o      -5.00000
+despmtr   inlet_area    3526.00000
+despmtr   inlet_AR       1.00000
+despmtr   engX_offset      50.00000
+despmtr   eng_pitch_offset       0.00000
+despmtr   eng_roll_offset       0.00000
+despmtr   eng_min_ext      40.00000
+despmtr   eng_length     300.00000
+despmtr   LG_length     120.00000
+despmtr   z_LE_r_REF     -43.00000
+despmtr   x_TE_r_REF    1150.00000
+despmtr   y_r_REF       0.00000
+dimension rx   7   1
+despmtr   rx[1,:]   "     0.10000;"
+despmtr   rx[2,:]   "    51.00000;"
+despmtr   rx[3,:]   "    60.00000;"
+despmtr   rx[4,:]   "    55.00000;"
+despmtr   rx[5,:]   "    51.00000;"
+despmtr   rx[6,:]   "    25.00000;"
+despmtr   rx[7,:]   "     0.10000;"
+dimension rydown   7   1
+despmtr   rydown[1,:]   "     0.10000;"
+despmtr   rydown[2,:]   "    51.00000;"
+despmtr   rydown[3,:]   "    62.00000;"
+despmtr   rydown[4,:]   "    59.00000;"
+despmtr   rydown[5,:]   "    56.00000;"
+despmtr   rydown[6,:]   "    25.00000;"
+despmtr   rydown[7,:]   "     0.10000;"
+dimension ryup   7   1
+despmtr   ryup[1,:]   "     0.10000;"
+despmtr   ryup[2,:]   "    51.00000;"
+despmtr   ryup[3,:]   "    61.00000;"
+despmtr   ryup[4,:]   "    55.00000;"
+despmtr   ryup[5,:]   "    51.00000;"
+despmtr   ryup[6,:]   "    25.00000;"
+despmtr   ryup[7,:]   "     0.10000;"
+dimension x0   7   1
+despmtr   x0[1,:]   "     0.00000;"
+despmtr   x0[2,:]   "   300.00000;"
+despmtr   x0[3,:]   "   502.00000;"
+despmtr   x0[4,:]   "   700.00000;"
+despmtr   x0[5,:]   "   900.00000;"
+despmtr   x0[6,:]   "  1200.00000;"
+despmtr   x0[7,:]   "  1400.00000;"
+dimension y0   7   1
+despmtr   y0[1,:]   "   -50.00000;"
+despmtr   y0[2,:]   "   -25.00000;"
+despmtr   y0[3,:]   "   -20.00000;"
+despmtr   y0[4,:]   "   -25.40000;"
+despmtr   y0[5,:]   "   -30.00000;"
+despmtr   y0[6,:]   "   -40.00000;"
+despmtr   y0[7,:]   "   -35.00000;"
+dimension ns   7   1
+despmtr   ns[1,:]   "     0.00000;"
+despmtr   ns[2,:]   "     0.00000;"
+despmtr   ns[3,:]   "     0.00000;"
+despmtr   ns[4,:]   "     0.00000;"
+despmtr   ns[5,:]   "    10.00000;"
+despmtr   ns[6,:]   "     0.00000;"
+despmtr   ns[7,:]   "     0.00000;"
+dimension nn   7   1
+despmtr   nn[1,:]   "     0.00000;"
+despmtr   nn[2,:]   "     0.00000;"
+despmtr   nn[3,:]   "     0.00000;"
+despmtr   nn[4,:]   "     0.00000;"
+despmtr   nn[5,:]   "     0.00000;"
+despmtr   nn[6,:]   "     0.00000;"
+despmtr   nn[7,:]   "     0.00000;"
+despmtr   flap_length      45.00000
+despmtr   Thetai      25.00000
+despmtr   Thetao      10.00000
+despmtr   Thetam      10.00000
+
+# Global Attributes:
+
+# Branches:
+dimension params   1   3
+set       params 10.0;5.0;10.0;
+set       inlet_width sqrt(inlet_area)/inlet_AR
+set       inlet_height inlet_area/inlet_width
+set       nac_wall 5
+set       span sqrt(AR*refArea)
+set       y_r y_r_REF
+set       y_t span/2
+set       y_m (y_t-y_r)*rel_y_m+y_r
+set       dy_mr y_m-y_r
+set       dy_tm y_t-y_m
+set       chord_r refArea/(dy_mr*(1+taper_ratio_i)+dy_tm*taper_ratio_i*(1+taper_ratio_o))
+set       chord_m chord_r*taper_ratio_i
+set       chord_t chord_m*taper_ratio_o
+set       x_LE_r x_TE_r_REF-chord_r
+set       x_TE_m x_TE_r_REF+tand(sweep_TE_i)*dy_mr
+set       x_LE_m x_TE_m-chord_m
+set       x_TE_t x_TE_m+tand(sweep_TE_o)*dy_tm
+set       x_LE_t x_TE_t-chord_t
+set       z_LE_r z_LE_r_REF
+set       z_TE_r z_LE_r-(chord_r*sind(twist_r))
+set       z_LE_m z_LE_r+dy_mr*tand(dihedral_i)
+set       z_TE_m z_LE_m-(chord_m*sind(twist_m))
+set       z_LE_t z_LE_m+dy_tm*tand(dihedral_o)
+set       z_TE_t z_LE_t-(chord_t*sind(twist_t))
+set       ttc_r 28.74/chord_r
+set       ttc_m 9.58/chord_m
+set       ttc_t 2.27/chord_t
+set       sweep_LE_i atand((x_LE_m-x_LE_r)/dy_mr)
+set       sweep_LE_o atand((x_LE_t-x_LE_m)/dy_tm)
+set       engY LG_length+inlet_width/2
+ifthen    engY+inlet_width/2   GE   y_m   and   0   eq   0
+   set       x_LE_eng_c x_LE_m+((x_LE_t-x_LE_m)/dy_tm)*(engY+inlet_width/2-y_m)
+else
+   set       x_LE_eng_c x_LE_r+((x_LE_m-x_LE_r)/dy_mr)*(engY+inlet_width/2-y_r)
+endif
+set       engX x_LE_eng_c+engX_offset
+ifthen    engY   GE   y_m   and   0   eq   0
+   set       chord_eng chord_m+((chord_t-chord_m)/dy_tm)*(engY-y_m)
+   set       x_TE_eng x_TE_m+((x_TE_t-x_TE_m)/dy_tm)*(engY-y_m)
+   set       x_LE_eng x_LE_m+((x_LE_t-x_LE_m)/dy_tm)*(engY-y_m)
+   set       z_LE_eng z_LE_m+((z_LE_t-z_LE_m)/dy_tm)*(engY-y_m)
+   set       z_TE_eng z_TE_m+((z_TE_t-z_TE_m)/dy_tm)*(engY-y_m)
+   set       eng_roll dihedral_o+eng_roll_offset
+else
+   set       chord_eng chord_r+((chord_m-chord_r)/dy_mr)*(engY-y_r)
+   set       x_TE_eng x_TE_r_REF+((x_TE_m-x_TE_r_REF)/dy_mr)*(engY-y_r)
+   set       x_LE_eng x_LE_r+((x_LE_m-x_LE_r)/dy_mr)*(engY-y_r)
+   set       z_LE_eng z_LE_r+((z_LE_m-z_LE_r)/dy_mr)*(engY-y_r)
+   set       z_TE_eng z_TE_r+((z_TE_m-z_TE_r)/dy_mr)*(engY-y_r)
+   set       eng_roll dihedral_i+eng_roll_offset
+endif
+set       eng_pitch -asind((z_TE_eng-z_LE_eng)/chord_eng)+eng_pitch_offset
+set       engZ z_LE_eng+(z_TE_eng-z_LE_eng)*(engX-x_LE_eng)/(x_TE_eng-x_LE_eng)
+ifthen    x_TE_eng   GE   engX+eng_length-eng_min_ext   and   0   eq   0
+   set       engX x_TE_eng+eng_min_ext-eng_length
+endif
+set       y_m_i y_r_REF+0.95*dy_mr
+set       chord_m_i chord_r+((chord_m-chord_r)/dy_mr)*(y_m_i)
+set       x_TE_m_i x_TE_r_REF+tand(sweep_TE_i)*y_m_i
+set       x_LE_m_i x_TE_m_i-chord_m_i
+set       z_LE_m_i z_LE_r_REF+y_m_i*tand(dihedral_i)
+set       twist_m_i twist_r+((twist_m-twist_r)/dy_mr)*(y_m_i)
+set       ttc_m_i ttc_r+((ttc_m-ttc_r)/dy_mr)*(y_m_i)
+set       y_m_o 0.05*dy_tm
+set       chord_m_o chord_m+((chord_t-chord_m)/dy_tm)*(y_m_o)
+set       x_TE_m_o x_TE_m+tand(sweep_TE_o)*y_m_o
+set       x_LE_m_o x_TE_m_o-chord_m_o
+set       z_LE_m_o z_LE_m+y_m_o*tand(dihedral_o)
+set       twist_m_o twist_m+((twist_t-twist_m)/dy_tm)*(y_m_o)
+set       ttc_m_o ttc_m+((ttc_t-ttc_m)/dy_tm)*(y_m_o)
+set       y_m_o y_m_o+dy_mr
+set       YYi_1 engY-inlet_width/2-10
+set       YYi_2 rx.max
+ifthen    YYi_1   GE   y_m   and   0   eq   0
+   set       XXi_1 x_TE_m+tand(sweep_TE_o)*(YYi_1-dy_mr)
+else
+   set       XXi_1 x_TE_r_REF+tand(sweep_TE_i)*YYi_1
+endif
+set       XXi_2 XXi_1-flap_length
+ifthen    YYi_2   GE   y_m   and   0   eq   0
+   set       XXi_4 x_TE_m+tand(sweep_TE_o)*(YYi_2-dy_mr)
+else
+   set       XXi_4 x_TE_r_REF+tand(sweep_TE_i)*YYi_2
+endif
+set       XXi_3 XXi_4-flap_length
+set       XXi_1 XXi_1+10
+set       XXi_4 XXi_4+10
+dimension XXi   1   4
+dimension YYi   1   4
+set       XXi XXi_1;XXi_2;XXi_3;XXi_4
+set       YYi YYi_1;YYi_1;YYi_2;YYi_2
+set       Gapi 1
+set       YYo_1 y_t-10
+set       YYo_4 engY+inlet_width/2+10
+set       dy_flapo YYo_1-YYo_4-10
+set       dy_12 dy_flapo*0.4
+set       dy_34 dy_flapo*0.6
+set       YYo_3 YYo_4+dy_34
+set       YYo_2 YYo_1-dy_12
+set       XXo_1 x_TE_m+tand(sweep_TE_o)*(YYo_1-dy_mr)
+set       XXo_2 XXo_1-flap_length
+ifthen    YYo_2   GE   y_m   and   0   eq   0
+   set       XXo_4 x_TE_m+tand(sweep_TE_o)*(YYo_2-dy_mr)
+else
+   set       XXo_4 x_TE_r_REF+tand(sweep_TE_i)*YYo_2
+endif
+set       XXo_3 XXo_4-flap_length
+set       XXo_1 XXo_1+10
+set       XXo_4 XXo_4+10
+dimension XXo   1   4
+dimension YYo   1   4
+set       XXo XXo_1;XXo_2;XXo_3;XXo_4;
+set       YYo YYo_1;YYo_1;YYo_2;YYo_2;
+set       Gapo 1
+ifthen    YYo_3   GE   y_m   and   0   eq   0
+   set       XXo_5 x_TE_m+tand(sweep_TE_o)*(YYo_3-dy_mr)
+else
+   set       XXo_5 x_TE_r_REF+tand(sweep_TE_i)*YYo_3
+endif
+set       XXo_6 XXo_5-flap_length
+ifthen    YYo_4   GE   y_m   and   0   eq   0
+   set       XXo_8 x_TE_m+tand(sweep_TE_o)*(YYo_4-dy_mr)
+else
+   set       XXo_8 x_TE_r_REF+tand(sweep_TE_i)*YYo_4
+endif
+set       XXo_7 XXo_8-flap_length
+set       XXo_5 XXo_5+10
+set       XXo_8 XXo_8+10
+dimension XXm   1   4
+dimension YYm   1   4
+set       XXm XXo_5;XXo_6;XXo_7;XXo_8
+set       YYm YYo_3;YYo_3;YYo_4;YYo_4
+set       Gapm 1
+mark
+udprim    biconvex   thick   ttc_r
+scale     chord_r   0   0   0
+rotatez   -twist_r   0   0
+translate x_LE_r   z_LE_r_REF   -y_r_REF
+udprim    biconvex   thick   ttc_m_i
+scale     chord_m_i   0   0   0
+rotatez   -twist_m_i   0   0
+translate x_LE_m_i   z_LE_m_i   -y_m_i
+udprim    biconvex   thick   ttc_m_o
+scale     chord_m_o   0   0   0
+rotatez   -twist_m_o   0   0
+translate x_LE_m_o   z_LE_m_o   -y_m_o
+udprim    biconvex   thick   ttc_t
+scale     chord_t   0   0   0
+rotatez   -twist_t   0   0
+translate x_LE_t   z_LE_t   -y_t
+blend     0   0   0   0   0
+rotatex   90   0   0
+select    body
+select    face
+dimension face_list   @sellist.nrow   @sellist.ncol
+set       face_list @sellist
+patbeg    i   face_list.size
+   select    face   face_list[i]
+attribute capsGroup   $WingEng
+attribute CartBC   1
+attribute _color   $yellow
+patend
+store     wing_solid   0   0
+restore   wing_solid   0
+rotatey   -eng_pitch   engZ   engX
+rotatex   -eng_roll   engY   engZ
+store     wing_solid_rot   0   1
+extract   2
+store     wing_lwr_surf   0   1
+box       engX   engY-inlet_width/2   engZ-1000   1000   inlet_width   2000
+store     nac_wing_cut   0   1
+subtract  none   1   0
+store     wing_lwr_surf   1   0
+restore   wing_lwr_surf   0
+restore   nac_wing_cut   0
+intersect none   1   0
+set       nac_patch_zmin @zmin
+set       nac_patch_zmax @zmax
+set       nac_patch_ymin @ymin
+set       nac_patch_ymax @ymax
+set       nac_patch_xmin @xmin
+set       nac_patch_xmax @xmax
+select    edge   engX   engY   engZ
+set       nac_LE_top_xcg @xcg
+set       nac_LE_top_ycg @ycg
+set       nac_LE_top_zcg @zcg
+store     wing_nac_intersect   0   0
+set       nac_LE_bot_xcg nac_LE_top_xcg+tand(60)*inlet_height
+set       nac_LE_bot_ycg nac_LE_top_ycg
+set       nac_LE_bot_zcg nac_LE_top_zcg-inlet_height
+skbeg     nac_LE_bot_xcg   nac_patch_ymin   nac_LE_bot_zcg   0
+   linseg    nac_LE_bot_xcg   nac_patch_ymax   nac_LE_bot_zcg
+   linseg    nac_patch_xmax   nac_patch_ymax   nac_LE_bot_zcg
+   linseg    nac_patch_xmax   nac_patch_ymin   nac_LE_bot_zcg
+   linseg    nac_LE_bot_xcg   nac_patch_ymin   nac_LE_bot_zcg
+skend     0
+reorder   0   1
+store     nac_bot_surf   0   0
+mark
+restore   nac_bot_surf   0
+restore   wing_nac_intersect   0
+select    body
+rule      1   0
+store     nac_body   0   1
+select    face
+select    sort   $xcg
+set       i_nac_hgl @sellist[1]
+set       i_nac_TE @sellist[@nface]
+select    sort   $zcg
+set       i_nac_bot @sellist[1]
+select    sort   $ycg
+set       i_nac_side_m @sellist[1]
+set       i_nac_side_p @sellist[@nface]
+extract   i_nac_side_m;i_nac_side_p;i_nac_bot
+select    body
+select    face
+dimension face_list   @sellist.nrow   @sellist.ncol
+set       face_list @sellist
+patbeg    i   face_list.size
+   select    face   face_list[i]
+attribute capsGroup   $WingEng
+attribute CartBC   1
+attribute _color   $cyan
+patend
+store     nac_shell   0   0
+restore   nac_body   0
+extract   i_nac_hgl
+store     nac_hgl_surf   0   0
+ifthen    engX+eng_length   LE   nac_patch_zmax   and   0   eq   0
+   set       eng_length nac_patch_zmax-engX+1
+endif
+skbeg     engX+eng_length   nac_patch_ymin   nac_LE_bot_zcg   0
+   linseg    engX+eng_length   nac_patch_ymax   nac_LE_bot_zcg
+   linseg    engX+eng_length   nac_patch_ymax   nac_patch_zmin
+   linseg    engX+eng_length   nac_patch_ymin   nac_patch_zmin
+   linseg    engX+eng_length   nac_patch_ymin   nac_LE_bot_zcg
+skend     0
+store     nac_exit_surf   0   0
+mark
+restore   nac_body   0
+extract   i_nac_TE
+restore   nac_exit_surf   0
+rule      1   0
+store     nac_ext_body   0   1
+select    face
+select    sort   $zcg
+set       i_ext_bot @sellist[1]
+set       i_ext_top @sellist[@nface]
+select    sort   $ycg
+set       i_ext_side_m @sellist[1]
+set       i_ext_side_p @sellist[@nface]
+extract   i_ext_side_m;i_ext_side_p;i_ext_bot;i_ext_top
+select    body
+select    face
+dimension face_list   @sellist.nrow   @sellist.ncol
+set       face_list @sellist
+patbeg    i   face_list.size
+   select    face   face_list[i]
+attribute capsGroup   $WingEng
+attribute CartBC   1
+attribute _color   $cyan
+patend
+store     nac_ext_shell   0   0
+skbeg     engX   engY-inlet_width/2+nac_wall   nac_LE_top_zcg-nac_wall   0
+   linseg    engX   nac_patch_ymax-nac_wall   nac_LE_top_zcg-nac_wall
+   linseg    engX   nac_patch_ymax-nac_wall   nac_LE_bot_zcg+nac_wall
+   linseg    engX   engY-inlet_width/2+nac_wall   nac_LE_bot_zcg+nac_wall
+   linseg    engX   engY-inlet_width/2+nac_wall   nac_LE_top_zcg-nac_wall
+skend     0
+extract   0
+store     nac_flow_frame   0   0
+mark
+restore   nac_hgl_surf   0
+extract   0
+restore   nac_flow_frame   0
+translate (nac_LE_bot_xcg+eng_length-nac_LE_top_xcg)/2   0   0
+restore   nac_exit_surf   0
+extract   0
+blend     0   0   1   0   0
+select    body
+select    face
+dimension face_list   @sellist.nrow   @sellist.ncol
+set       face_list @sellist
+patbeg    i   face_list.size
+   select    face   face_list[i]
+attribute capsGroup   $Flowthrough
+attribute CartBC   4
+attribute _color   $red
+patend
+store     flowthrough_y_p   0   0
+mark
+patbeg    i   7
+   udparg    supell   rx   rx[i,1]   ry_s   rydown[i,1]   ry_n   ryup[i,1]
+   udprim    supell   n_s   ns[i,1]   n_n   nn[i,1]
+   rotatey   90   0   0
+   translate x0[i,1]   y0[i,1]   0.0
+patend
+blend     0   0   0   0   0
+rotatex   90   0   0
+select    body
+select    face
+dimension face_list   @sellist.nrow   @sellist.ncol
+set       face_list @sellist
+patbeg    i   face_list.size
+   select    face   face_list[i]
+attribute capsGroup   $Fuselage
+attribute CartBC   2
+attribute _color   $magenta
+patend
+store     fuselage_body   0   0
+mark
+udprim    biconvex   thick   0.06
+scale     220   0   0   0
+translate 1130   0.1   -35.0
+udprim    biconvex   thick   0.05
+scale     60   0   0   0
+translate 1303.2051   0.1   65
+blend     0   0   0   0   0
+select    body
+select    face
+dimension face_list   @sellist.nrow   @sellist.ncol
+set       face_list @sellist
+patbeg    i   face_list.size
+   select    face   face_list[i]
+attribute capsGroup   $VTP
+attribute CartBC   3
+attribute _color   $blue
+patend
+store     vtp_body   0   0
+mark
+restore   nac_shell   0
+restore   nac_ext_shell   0
+restore   flowthrough_y_p   0
+restore   wing_solid_rot   0
+extract   1;3;4
+restore   wing_lwr_surf   1
+combine   5
+rotatey   eng_pitch   engZ   engX
+rotatex   eng_roll   engY   engZ
+store     wing_nac_body   0   0
+mark
+restore   wing_nac_body   0
+udparg    $$/flapz   xflap   XXo
+udparg    $$/flapz   yflap   YYo
+udparg    $$/flapz   theta   Thetao
+udparg    $$/flapz   gap   Gapo
+udprim    $$/flapz   openEnd   1
+udparg    $$/flapz   xflap   XXm
+udparg    $$/flapz   yflap   YYm
+udparg    $$/flapz   theta   Thetam
+udparg    $$/flapz   gap   Gapm
+udprim    $$/flapz   openEnd   1
+udparg    $$/flapz   xflap   XXi
+udparg    $$/flapz   yflap   YYi
+udparg    $$/flapz   theta   Thetai
+udparg    $$/flapz   gap   Gapi
+udprim    $$/flapz   openEnd   1
+store     wing_nac_flap_body   0   0
+ifthen    output_format   EQ   2   and   0   eq   0
+   set       file_ext $.stp
+elseif    output_format   EQ   3   and   0   eq   0
+   set       file_ext $.brep
+elseif    output_format   EQ   4   and   0   eq   0
+   set       file_ext $.stl
+elseif    output_format   EQ   5   and   0   eq   0
+   set       file_ext $.iges
+else
+   set       file_ext $.egads
+endif
+ifthen    output_num   EQ   1   and   0   eq   0
+   mark
+   restore   fuselage_body   0
+   restore   vtp_body   0
+   restore   wing_nac_flap_body   0
+   restore   wing_nac_flap_body   0
+   mirror    0   1   0   0
+   union     1   0   0
+   set       filename $geom+!file_ext
+   dump      !filename   0   0   0
+elseif    output_num   EQ   2   and   0   eq   0
+   mark
+   restore   wing_solid   0
+   mirror    0   1   0   0
+   restore   wing_solid   0
+   union     0   0   0
+   mark
+   restore   nac_shell   0
+   restore   nac_ext_shell   0
+   restore   flowthrough_y_m   0
+   restore   flowthrough_y_p   0
+   combine   1
+   rotatey   eng_pitch   engZ   engX
+   rotatex   eng_roll   engY   engZ
+   store     eng_body   0   1
+   restore   eng_body   0
+   mirror    0   1   0   0
+   restore   fuselage_body   0
+   restore   vtp_body   0
+   set       filename $geom+!file_ext
+   dump      !filename   0   1   0
+elseif    output_num   EQ   3   and   0   eq   0
+   restore   wing_solid   0
+   mirror    0   1   0   0
+   restore   wing_solid   0
+   union     0   0   0
+   set       filename $wing+!file_ext
+   dump      !filename   0   0   0
+   mark
+   restore   nac_shell   0
+   restore   nac_ext_shell   0
+   restore   flowthrough_y_m   0
+   restore   flowthrough_y_p   0
+   combine   1
+   rotatey   eng_pitch   engZ   engX
+   rotatex   eng_roll   engY   engZ
+   store     eng_body   0   1
+   set       filename $portEngine+!file_ext
+   dump      !filename   0   0   0
+   restore   eng_body   0
+   mirror    0   1   0   0
+   set       filename $starboardEngine+!file_ext
+   dump      !filename   0   0   0
+   restore   fuselage_body   0
+   set       filename $fuselage+!file_ext
+   dump      !filename   0   0   0
+   restore   vtp_body   0
+   set       filename $vtp+!file_ext
+   dump      !filename   0   0   0
+else
+   assert    output_num   LE   3   0
+endif
+
+end

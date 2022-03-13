@@ -1,0 +1,42 @@
+interface ID        in  0
+interface intent    in  1
+interface xloc      in  0
+interface yloc      in  0
+interface width     in  0
+interface topHeight in  0
+interface botHeight in  0
+interface tailRadius  in  0
+interface noseRadius  in  0
+interface order in 0
+
+
+
+dimension tailList 1 8
+set tailList "tailRadius[1];0;1;0;tailRadius[2];0;0;1"
+dimension noseList 1 8
+set noseList "noseRadius[1];0;1;0;noseRadius[2];0;0;1"
+
+mark
+point xloc[1] yloc[1] 0
+patbeg isect width.ncol   
+   #super ellipse i
+   udprim    supell    rx  width[isect]  ry_s  botHeight[isect]  ry_n  topHeight[isect]  n  order[isect]
+   rotatey -90 0 0
+   translate xloc[isect+1]  yloc[isect+1] 0
+patend
+set nx xloc.ncol
+point xloc[nx] yloc[nx] 0
+   
+blend tailList noseList
+
+hollow 0
+
+
+
+#patbeg jsect numXsect
+#   set isect jsect+1
+#   udprim    supell    rx  width[isect]  ry_s  botHeight[isect]  ry_n  topHeight[isect]  n  order[isect]
+#   rotatey -90 0 0
+#   translate xloc[isect]  yloc[isect] 0
+#   union
+#patend

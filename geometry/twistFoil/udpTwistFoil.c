@@ -15,8 +15,8 @@
 /* shorthands for accessing argument values and velocities */
 #define TOVERC(     IUDP,I)  ((double *) (udps[IUDP].arg[0].val))[I]
 #define TOVERC_DOT( IUDP,I)  ((double *) (udps[IUDP].arg[0].dot))[I]
-#define TWISTAOA(     IUDP,I)  ((double *) (udps[IUDP].arg[1].val))[I]
-#define TWISTAOA_DOT( IUDP,I)  ((double *) (udps[IUDP].arg[1].dot))[I]
+#define TWISTANGLE(     IUDP,I)  ((double *) (udps[IUDP].arg[1].val))[I]
+#define TWISTANGLE_DOT( IUDP,I)  ((double *) (udps[IUDP].arg[1].dot))[I]
 #define TWISTMAG(    IUDP,I)  ((double *) (udps[IUDP].arg[2].val))[I]
 #define TWISTMAG_DOT(IUDP,I)  ((double *) (udps[IUDP].arg[2].dot))[I]
 #define PHASESHIFT(    IUDP,I)  ((double *) (udps[IUDP].arg[3].val))[I]
@@ -24,17 +24,17 @@
 #define NUMPTS(IUDP  )  ((int    *) (udps[IUDP].arg[4].val))[0]
 
 /* data about possible arguments */
-static char*  argNames[NUMUDPARGS] = {"toverc",    "twistAOA",  "twistMag",  "phaseShift", "numpts"};
+static char*  argNames[NUMUDPARGS] = {"toverc",    "twistAngle",  "twistMag",  "phaseShift", "numpts"};
 static int    argTypes[NUMUDPARGS] = {ATTRREALSEN, ATTRREALSEN, ATTRREALSEN, ATTRREALSEN,  ATTRINT};
 static int    argIdefs[NUMUDPARGS] = {0,           0,           0,           0,           101,      };
 static double argDdefs[NUMUDPARGS] = {0,           0.,          0.,          0.,          0.,       };
 
 typedef struct {
   int    sharpte;
-  double toverc[1];
-  double twistAOA[1];
-  double twistMag[1];
-  double phaseShift[1];
+  double toverc_dot[2];
+  double twistAngle_dot[2];
+  double twistMag_dot[2];
+  double phaseShift_dot[2];
 } udpDotCache_T;
 
 #define FREEUDPDATA(A) freePrivateData(A)
@@ -74,6 +74,40 @@ static int freePrivateData(void *data)
     #include "grafic.h"
 #endif
 
+/*
+ ************************************************************************
+ *                                                                      *
+ *   factorial - factorial of a number (with cache)                     *
+ *                                                                      *
+ ************************************************************************
+ */
+
+static long
+factorial(int n)
+{
+    long result;
+    static long table[] = {1, 1, 2, 6, 24, 120, 720, 5040, 40320,
+                           362880, 3628800, 39916800, 479001600};
+
+    /* bad input */
+    if        (n < 0) {
+        result = 0;
+
+    /* use (cached) result from table */
+    } else if (n < 13) {
+        result = table[n];
+
+    /* compute the result if not in the table */
+    } else {
+        result = n;
+        while (--n > 1) {
+            result *= n;
+        }
+    }
+
+    return result;
+}
+
 
 /*
  ************************************************************************
@@ -90,11 +124,11 @@ udpExecute(ego  context,                /* (in)  EGADS context */
            char *string[])   {           /* (out) error message */
 
     int     status = EGADS_SUCCESS;
-
+    
     int     ipnt, LEind, sense[3], nedge, *header=NULL, sizes[2], oclass, mtype;
     double  *pnts=NULL, *rdata=NULL, *tangent=NULL;
     double x0, y0, t, x0dot, y0dot;
-    double x1, y1, twistAOA_rad, x1dot, y1dot;
+    double x1, y1, twistAngle_rad, x1dot, y1dot;
     double phaseShift_rad, y2, y2dot, x2, length;
     double xLE, yLE, minTangent;
     double x3, y3, alphaLE;
@@ -126,7 +160,7 @@ udpExecute(ego  context,                /* (in)  EGADS context */
         goto cleanup;
 
     } else if (udps[0].arg[1].size != 1) {
-        printf(" udpExecute: twistAOA should contain only 1 value in deg\n");
+        printf(" udpExecute: twistAngle should contain only 1 value in deg\n");
         status = EGADS_RANGERR;
         goto cleanup;
 
@@ -154,7 +188,7 @@ udpExecute(ego  context,                /* (in)  EGADS context */
         int i;
 
         printf("toverc   = %f\n", toverc(0));
-        printf("twistAOA   = %f\n", twistAOA(0));
+        printf("twistAngle   = %f\n", twistAngle(0));
         printf("twistMag   = %f\n", twistMag(0));
         printf("phaseShift   = %f\n", phaseShift(0));
         printf("numpts(0)      = %d\n", NUMPTS( 0));
@@ -169,10 +203,10 @@ udpExecute(ego  context,                /* (in)  EGADS context */
     udps[numUdp].data = (void*)cache;
 
     cache->sharpte      = 1;
-    cache->toverc[0] = 0;
-    cache->twistAOA[0] = 0;
-    cache->twistMag[0] = 0;
-    cache->phaseShift[0] = 0;
+    cache->toverc_dot[0] = 0;
+    cache->twistAngle_dot[0] = 0;
+    cache->twistMag_dot[0] = 0;
+    cache->phaseShift_dot[0] = 0;
 
     /* mallocs required by Windows compiler */
     MALLOC(pnts, double, (3*NUMPTS(numUdp)));
@@ -188,12 +222,12 @@ udpExecute(ego  context,                /* (in)  EGADS context */
         x0dot = 0.5*sin(t);
         y0dot = 2/3*TOVERC(numUdp,0) * (cos(t)*sin(0.5*t) + sin(t) * 0.5*cos(0.5*t));
 
-        // step two rotate airfoil upwards (with TE at origin), via twistAOA
-        twistAOA_rad = TWOPI / 360 * TWISTAOA(numUdp,0);
-        x1 = x0 * cos(twistAOA_rad) + y0 * sin(twistAOA_rad);
-        y1 = -x0 * sin(twistAOA_rad) + y0 * cos(twistAOA_rad);
-        x1dot = x0dot * cos(twistAOA_rad) + y0dot * sin(twistAOA_rad);
-        y1dot = -x0dot * sin(twistAOA_rad) + y0dot * cos(twistAOA_rad);
+        // step two rotate airfoil upwards (with TE at origin), via twistAngle
+        twistAngle_rad = TWOPI / 360 * TWISTANGLE(numUdp,0);
+        x1 = x0 * cos(twistAngle_rad) + y0 * sin(twistAngle_rad);
+        y1 = -x0 * sin(twistAngle_rad) + y0 * cos(twistAngle_rad);
+        x1dot = x0dot * cos(twistAngle_rad) + y0dot * sin(twistAngle_rad);
+        y1dot = -x0dot * sin(twistAngle_rad) + y0dot * cos(twistAngle_rad);
 
         // apply twisting and phase shift
         phaseShift_rad = TWOPI / 360 * PHASESHIFT(numUdp,0);
@@ -242,6 +276,9 @@ udpExecute(ego  context,                /* (in)  EGADS context */
         pnts[3*ipnt] = x3;
         pnts[3*ipnt+1] = y3;
     }
+#ifdef DEBUG
+    printf("pnts=%llx\n", pnts[10],pnts[11]);
+#endif
 
   /* create spline curve
      *
@@ -305,7 +342,7 @@ udpExecute(ego  context,                /* (in)  EGADS context */
             nline++;
         }
 
-        grinit_(&io_kbd, &io_scr, "udpKulfan", STRLEN("udpKulfan"));
+        grinit_(&io_kbd, &io_scr, "udpTwistFoil", STRLEN("udpTwistFoil"));
         grline_(ilin, isym, &nline,                 "~x~y~O=points, line=fit",
                 &indgr, xplot, yplot, nper, STRLEN( "~x~y~O=points, line=fit"));
     }
@@ -452,355 +489,350 @@ cleanup:
     return status;
 }
 
-// /*
-//  *****************************************************************************
-//  *                                                                           *
-//  *   udpSensitivity - return sensitivity derivatives for the "real" argument *
-//  *                                                                           *
-//  *****************************************************************************
-//  */
-
-// int
-// udpSensitivity(ego    ebody,            /* (in)  Body pointer */
-//                int    npnt,             /* (in)  number of points */
-//                int    entType,          /* (in)  OCSM entity type */
-//                int    entIndex,         /* (in)  OCSM entity index (bias-1) */
-//                double uvs[],            /* (in)  parametric coordinates for evaluation */
-//                double vels[])           /* (out) velocities */
-// {
-//     int    status = EGADS_SUCCESS;
-
-//     int    iudp, judp;
-
-//     int    ipnt, nedge, i, r, n, idotChange, sizes[2];
-//     int    oclass, mtype, nchild, *senses, stride;
-//     double shape, shape_dot, s, K, pow1, pow2, zeta;
-//     double *pnts=NULL, *pnts_dot=NULL, point[18], point_dot[18];
-//     double  data[18], data_dot[18], tdata[2], tdata_dot[2];
-//     double  tle, tle_dot, *rdata=NULL, *rdata_dot=NULL;;
-//     ego    eref, *echildren, eface, eplane, eloop, enodes[3], *eedges, ecurve, eline, eent;
-//     udpDotCache_T *cache;
-
-// #ifdef DEBUG
-//     printf("udpSensitivity(ebody=%llx, npnt=%d, entType=%d, entIndex=%d, uvs=%f %f)\n",
-//            (long long)ebody, npnt, entType, entIndex, uvs[0], uvs[1]);
-// #endif
-
-//     ROUTINE(udpSensitivity);
-
-//     /* --------------------------------------------------------------- */
-
-//     /* check that ebody matches one of the ebodys */
-//     iudp = 0;
-//     for (judp = 1; judp <= numUdp; judp++) {
-//         if (ebody == udps[judp].ebody) {
-//             iudp = judp;
-//             break;
-//         }
-//     }
-//     if (iudp <= 0) {
-//         return EGADS_NOTMODEL;
-//     }
-
-//     /* check if velocities have changed */
-//     cache = (udpDotCache_T*)udps[iudp].data;
-//     idotChange = 0;
-//     for (i = 0; i < 2; i++) {
-//         if ( cache->class_dot[i] != CLASS_DOT(iudp, i) ) {
-//             idotChange = 1;
-//         }
-//         if ( cache->ztail_dot[i] != ZTAIL_DOT(iudp, i) ) {
-//             idotChange = 1;
-//         }
-//     }
-//     for (i = 0; i < udps[iudp].arg[2].size && idotChange == 0; i++)
-//         if ( cache->aupper_dot[i] != AUPPER_DOT(iudp,i) ) {
-//             idotChange = 1;
-//         }
-//     for (i = 0; i < udps[iudp].arg[3].size && idotChange == 0; i++)
-//         if ( cache->alower_dot[i] != ALOWER_DOT(iudp,i) ) {
-//             idotChange = 1;
-//         }
-
-//     /* populate the egos with sensitivities if velocities changed or do not exist */
-//     if (idotChange == 1 ||
-//         EG_hasGeometry_dot(ebody) != EGADS_SUCCESS) {
-
-//         for (i = 0; i < 2; i++) {
-//             cache->class_dot[i] = CLASS_DOT(iudp, i);
-//             cache->ztail_dot[i] = ZTAIL_DOT(iudp, i);
-//         }
-//         for (i = 0; i < udps[iudp].arg[2].size; i++) {
-//             cache->aupper_dot[i] = AUPPER_DOT(iudp,i);
-//         }
-//         for (i = 0; i < udps[iudp].arg[3].size; i++) {
-//             cache->alower_dot[i] = ALOWER_DOT(iudp,i);
-//         }
-
-//         /* get the face from the FACEBODY */
-//         status = EG_getTopology(ebody, &eref, &oclass, &mtype, data, &nchild, &echildren,
-//                                 &senses);
-//         CHECK_STATUS(EG_getTopology);
-//         eface = echildren[0];
-
-//         /* get the plane and the loop */
-//         status = EG_getTopology(eface, &eplane, &oclass, &mtype, data, &nchild, &echildren,
-//                                 &senses);
-//         CHECK_STATUS(EG_getTopology);
-//         eloop = echildren[0];
-
-//         /* get the edges from the loop */
-//         status = EG_getTopology(eloop, &eref, &oclass, &mtype, data, &nedge, &eedges,
-//                                 &senses);
-//         CHECK_STATUS(EG_getTopology);
-
-//         /* get the nodes and the curve from the first edge */
-//         status = EG_getTopology(eedges[0], &ecurve, &oclass, &mtype, data, &nchild, &echildren,
-//                                 &senses);
-//         CHECK_STATUS(EG_getTopology);
-//         enodes[0] = echildren[0]; /* upper trailing edge */
-//         enodes[1] = echildren[1]; /* leading edge        */
-
-//         /* create the kulfan spline points with sensitivities */
-
-//         /* mallocs required by Windows compiler */
-//         MALLOC(pnts    , double, (3*NUMPTS(iudp)));
-//         MALLOC(pnts_dot, double, (3*NUMPTS(iudp)));
-
-//         /* points around airfoil ( upper and lower) */
-//         for (ipnt = 0; ipnt < NUMPTS(iudp); ipnt++) {
-//             zeta = TWOPI * ipnt / (NUMPTS(iudp)-1);
-//             s    = (1 + cos(zeta)) / 2;
-
-//             /* upper surface */
-//             if ( ipnt < (NUMPTS(iudp)-1)/2){
-//                 n = udps[iudp].arg[2].size - 1;
-
-//                 shape     = 0;
-//                 shape_dot = 0;
-//                 for (r = 0; r <= n; r++) {
-//                     pow1 = pow(1-s, n-r);
-//                     pow2 = pow(  s,   r);
-//                     K    = factorial(n) / factorial(r) / factorial(n-r);
-//                     shape     += AUPPER(    iudp,r) * K * pow1 * pow2;
-//                     shape_dot += AUPPER_DOT(iudp,r) * K * pow1 * pow2;
-//                 }
-
-//                 /* points for the spline fit */
-//                 pow1 = pow(  s, CLASS(iudp,0));
-//                 pow2 = pow(1-s, CLASS(iudp,1));
-//                 pnts[3*ipnt  ] = s;
-//                 pnts[3*ipnt+1] = pow1 * pow2 * shape + ZTAIL(iudp,0) * s;
-//                 pnts[3*ipnt+2] = 0;
-
-//                 /* velocity of the points for the spline fit */
-//                 pnts_dot[3*ipnt  ] = 0;
-//                 pnts_dot[3*ipnt+1] = pow1 * pow2 * shape_dot + ZTAIL_DOT(iudp,0) * s;
-//                 if (s   > 0) pnts_dot[3*ipnt+1] += pow1 * pow2 * shape * log(  s)
-//                                                    * CLASS_DOT(iudp,0);
-//                 if (1-s > 0) pnts_dot[3*ipnt+1] += pow1 * pow2 * shape * log(1-s)
-//                                                    * CLASS_DOT(iudp,1);
-//                 pnts_dot[3*ipnt+2] = 0;
-
-//             /* leading edge */
-//             } else if (ipnt == (NUMPTS(iudp)-1)/2) {
-//                 pnts[3*ipnt  ] = 0;
-//                 pnts[3*ipnt+1] = 0;
-//                 pnts[3*ipnt+2] = 0;
-
-//                 pnts_dot[3*ipnt  ] = 0;
-//                 pnts_dot[3*ipnt+1] = 0;
-//                 pnts_dot[3*ipnt+2] = 0;
-
-//             /* lower surface */
-//             } else if (ipnt > (NUMPTS(iudp)-1)/2) {
-//                 n = udps[iudp].arg[3].size - 1;
-
-//                 shape     = 0;
-//                 shape_dot = 0;
-//                 for (r = 0; r <= n; r++) {
-//                     pow1 = pow(1-s, n-r);
-//                     pow2 = pow(  s,   r);
-//                     K    = factorial(n) / factorial(r) / factorial(n-r);
-//                     shape     += ALOWER(    iudp,r) * K * pow1 * pow2;
-//                     shape_dot += ALOWER_DOT(iudp,r) * K * pow1 * pow2;
-//                 }
-
-//                 /* points for the spline fit */
-//                 pow1 = pow(  s, CLASS(iudp,0));
-//                 pow2 = pow(1-s, CLASS(iudp,1));
-//                 pnts[3*ipnt  ] = s;
-//                 pnts[3*ipnt+1] = pow1 * pow2 * shape + ZTAIL(iudp,1) * s;
-//                 pnts[3*ipnt+2] = 0;
-
-//                 /* velocity of the points for the spline fit */
-//                 pnts_dot[3*ipnt  ] = 0;
-//                 pnts_dot[3*ipnt+1] = pow1 * pow2 * shape_dot + ZTAIL_DOT(iudp,1) * s;
-//                 if (s   > 0) pnts_dot[3*ipnt+1] += pow1 * pow2 * shape * log(  s)
-//                                                    * CLASS_DOT(iudp,0);
-//                 if (1-s > 0) pnts_dot[3*ipnt+1] += pow1 * pow2 * shape * log(1-s)
-//                                                    * CLASS_DOT(iudp,1);
-//                 pnts_dot[3*ipnt+2] = 0;
-//             }
-//         }
-
-//         /* populate spline curve sensitivities */
-//         sizes[0] = NUMPTS(iudp);
-//         sizes[1] = KNOTS;
-//         status = EG_approximate_dot(ecurve, 0, DXYTOL, sizes, pnts, pnts_dot);
-//         CHECK_STATUS(EG_approximate_dot);
-
-//         /* set the sensitivity of the Node at trailing edge */
-//         ipnt = 0;
-//         status = EG_setGeometry_dot(enodes[0], NODE, 0, NULL, &(pnts[3*ipnt]), &(pnts_dot[3*ipnt]));
-//         CHECK_STATUS(EG_setGeometry_dot);
-
-
-//         /* set the sensitivity of the Node at leading edge */
-//         status = EG_getGeometry_dot(ecurve, &rdata, &rdata_dot);
-//         CHECK_STATUS(EG_getGeometry_dot);
-
-//         ipnt = (NUMPTS(iudp) - 1) / 2 + 3; /* index, with knot offset of 3 (cubic)*/
-//         tle     = rdata[ipnt];        /* t-value (should be very close to (0,0,0) */
-//         tle_dot = rdata_dot[ipnt];    /* t-value sensitivity */
-
-//         status = EG_evaluate_dot(ecurve, &tle, &tle_dot, data, data_dot);
-//         CHECK_STATUS(EG_evaluate_dot);
-//         status = EG_setGeometry_dot(enodes[1], NODE, 0, NULL, data, data_dot);
-//         CHECK_STATUS(EG_setGeometry_dot);
-
-
-//         /* set Edge t-range sensitivity for upper surface */
-//         tdata[0]     = 0;
-//         tdata[1]     = tle;
-//         tdata_dot[0] = 0;
-//         tdata_dot[1] = tle_dot;
-
-//         status = EG_setRange_dot(eedges[0], EDGE, tdata, tdata_dot);
-//         CHECK_STATUS(EG_setRange_dot);
-
-//         /* set Edge t-range sensitivity for lower surface */
-//         tdata[0]     = tdata[1];
-//         tdata[1]     = 1;
-//         tdata_dot[0] = tdata_dot[1];
-//         tdata_dot[1] = 0;
-
-//         status = EG_setRange_dot(eedges[1], EDGE, tdata, tdata_dot);
-//         CHECK_STATUS(EG_setRange_dot);
-
-
-//         if (cache->sharpte == 0) {
-//             /* get trailing edge line and the lower trailing edge node from the 3rd edge */
-//             status = EG_getTopology(eedges[2], &eline, &oclass, &mtype, data, &nchild, &echildren,
-//                                     &senses);
-//             CHECK_STATUS(EG_getTopology);
-//             enodes[2] = echildren[0]; /* lower trailing edge */
-
-//             /* set the sensitivity of the Node at lower trailing edge */
-//             ipnt = NUMPTS(iudp) - 1;
-//             status = EG_setGeometry_dot(enodes[2], NODE, 0, NULL, &(pnts[3*ipnt]), &(pnts_dot[3*ipnt]));
-//             CHECK_STATUS(EG_setGeometry_dot);
-
-//             /* set the sensitivity of the line segment at trailing edge */
-//             ipnt = NUMPTS(iudp) - 1;
-//             data[0] = pnts[3*ipnt  ];
-//             data[1] = pnts[3*ipnt+1];
-//             data[2] = pnts[3*ipnt+2];
-//             data[3] = pnts[0] - data[0];
-//             data[4] = pnts[1] - data[1];
-//             data[5] = pnts[2] - data[2];
-
-//             data_dot[0] = pnts_dot[3*ipnt  ];
-//             data_dot[1] = pnts_dot[3*ipnt+1];
-//             data_dot[2] = pnts_dot[3*ipnt+2];
-//             data_dot[3] = pnts_dot[0] - data_dot[0];
-//             data_dot[4] = pnts_dot[1] - data_dot[1];
-//             data_dot[5] = pnts_dot[2] - data_dot[2];
-
-//             status = EG_setGeometry_dot(eline, CURVE, LINE, NULL, data, data_dot);
-//             CHECK_STATUS(EG_setGeometry_dot);
-
-//             /* set Edge t-range sensitivity */
-//             tdata[0] = 0;
-//             tdata[1] = sqrt(data[3]*data[3] + data[4]*data[4] + data[5]*data[5]);
-
-//             tdata_dot[0] = 0;
-//             tdata_dot[1] = (data[3]*data_dot[3] + data[4]*data_dot[4] + data[5]*data_dot[5])/tdata[1];
-
-//             status = EG_setRange_dot(eedges[2], EDGE, tdata, tdata_dot);
-//             CHECK_STATUS(EG_setRange_dot);
-//         }
-
-//         /* plane data */
-//         data[0] = 0.;
-//         data[1] = 0.;
-//         data[2] = 0.;
-//         data[3] = 1.; data[4] = 0.; data[5] = 0.;
-//         data[6] = 0.; data[7] = 1.; data[8] = 0.;
-
-//         /* set the sensitivity of the plane */
-//         data_dot[0] = 0.;
-//         data_dot[1] = 0.;
-//         data_dot[2] = 0.;
-//         data_dot[3] = 0.; data_dot[4] = 0.; data_dot[5] = 0.;
-//         data_dot[6] = 0.; data_dot[7] = 0.; data_dot[8] = 0.;
-
-//         status = EG_setGeometry_dot(eplane, SURFACE, PLANE, NULL, data, data_dot);
-//         CHECK_STATUS(EG_setGeometry_dot);
-
-//     } /* if (udps[iudp].data == NULL) */
-
-
-//     /* find the ego entity */
-//     if (entType == OCSM_NODE) {
-//         status = EG_getBodyTopos(ebody, NULL, NODE, &nchild, &echildren);
-//         CHECK_STATUS(EG_getBodyTopos);
-
-//         stride = 0;
-//         eent = echildren[entIndex-1];
-
-//         EG_free(echildren); echildren = NULL;
-//     } else if (entType == OCSM_EDGE) {
-//         status = EG_getBodyTopos(ebody, NULL, EDGE, &nchild, &echildren);
-//         CHECK_STATUS(EG_getBodyTopos);
-
-//         stride = 1;
-//         eent = echildren[entIndex-1];
-
-//         EG_free(echildren); echildren = NULL;
-//     } else if (entType == OCSM_FACE) {
-//         status = EG_getBodyTopos(ebody, NULL, FACE, &nchild, &echildren);
-//         CHECK_STATUS(EG_getBodyTopos);
-
-//         stride = 2;
-//         eent = echildren[entIndex-1];
-
-//         EG_free(echildren); echildren = NULL;
-//     } else {
-//         printf("udpSensitivity: bad entType=%d\n", entType);
-//         status = EGADS_GEOMERR;
-//         goto cleanup;
-//     }
-
-//     /* get the velocities from the entity */
-//     for (ipnt = 0; ipnt < npnt; ipnt++) {
-//         status = EG_evaluate_dot(eent, &(uvs[stride*ipnt]), NULL, point, point_dot);
-//         CHECK_STATUS(EG_evaluate_dot);
-
-//         /* return the point velocity */
-//         vels[3*ipnt  ] = point_dot[0];
-//         vels[3*ipnt+1] = point_dot[1];
-//         vels[3*ipnt+2] = point_dot[2];
-//     }
-
-//     status = EGADS_SUCCESS;
-
-// cleanup:
-//     EG_free(pnts);
-//     EG_free(pnts_dot);
-//     EG_free(rdata);
-//     EG_free(rdata_dot);
-
-//     return status;
-// }
+/*
+ *****************************************************************************
+ *                                                                           *
+ *   udpSensitivity - return sensitivity derivatives for the "real" argument *
+ *                                                                           *
+ *****************************************************************************
+ */
+
+int
+udpSensitivity(ego    ebody,            /* (in)  Body pointer */
+               int    npnt,             /* (in)  number of points */
+               int    entType,          /* (in)  OCSM entity type */
+               int    entIndex,         /* (in)  OCSM entity index (bias-1) */
+               double uvs[],            /* (in)  parametric coordinates for evaluation */
+               double vels[])           /* (out) velocities */
+{
+    int    status = EGADS_SUCCESS;
+
+    int    iudp, judp;
+
+    int    ipnt, nedge, i, r, n, idotChange, sizes[2];
+    int    oclass, mtype, nchild, *senses, stride;
+    double shape, shape_dot, s, K, pow1, pow2, zeta;
+    double *pnts=NULL, *pnts_dot=NULL, point[18], point_dot[18];
+    double  data[18], data_dot[18], tdata[2], tdata_dot[2];
+    double  tle, tle_dot, *rdata=NULL, *rdata_dot=NULL;;
+    ego    eref, *echildren, eface, eplane, eloop, enodes[3], *eedges, ecurve, eline, eent;
+    udpDotCache_T *cache;
+
+#ifdef DEBUG
+    printf("udpSensitivity(ebody=%llx, npnt=%d, entType=%d, entIndex=%d, uvs=%f %f)\n",
+           (long long)ebody, npnt, entType, entIndex, uvs[0], uvs[1]);
+#endif
+
+    ROUTINE(udpSensitivity);
+
+    /* --------------------------------------------------------------- */
+
+    /* check that ebody matches one of the ebodys */
+    iudp = 0;
+    for (judp = 1; judp <= numUdp; judp++) {
+        if (ebody == udps[judp].ebody) {
+            iudp = judp;
+            break;
+        }
+    }
+    if (iudp <= 0) {
+        return EGADS_NOTMODEL;
+    }
+
+    /* check if velocities have changed */
+    cache = (udpDotCache_T*)udps[iudp].data;
+    idotChange = 0;
+    for (i = 0; i < 1; i++) {
+        if ( cache->toverc_dot[i] != TOVERC_DOT(iudp, i) ) {
+            idotChange = 1;
+        }
+        if ( cache->twistAngle_dot[i] != TWISTANGLE_DOT(iudp, i) ) {
+            idotChange = 1;
+        }
+        if ( cache->twistMag_dot[i] != TWISTMAG_DOT(iudp,i) ) {
+            idotChange = 1;
+        }
+        if ( cache->phaseShift_dot[i] != PHASESHIFT_DOT(iudp,i) ) {
+            idotChange = 1;
+        }
+    }
+        
+
+    /* populate the egos with sensitivities if velocities changed or do not exist */
+    if (idotChange == 1 ||
+        EG_hasGeometry_dot(ebody) != EGADS_SUCCESS) {
+
+        for (i = 0; i < 1; i++) {
+            cache->toverc_dot[i] = TOVERC_DOT(iudp, i);
+            cache->twistAngle_dot[i] = TWISTANGLE_DOT(iudp, i);
+            cache->twistMag_dot[i] = TWISTMAG_DOT(iudp,i);
+            cache->phaseShift_dot[i] = PHASESHIFT_DOT(iudp,i);
+        }
+
+        /* get the face from the FACEBODY */
+        status = EG_getTopology(ebody, &eref, &oclass, &mtype, data, &nchild, &echildren,
+                                &senses);
+        CHECK_STATUS(EG_getTopology);
+        eface = echildren[0];
+
+        /* get the plane and the loop */
+        status = EG_getTopology(eface, &eplane, &oclass, &mtype, data, &nchild, &echildren,
+                                &senses);
+        CHECK_STATUS(EG_getTopology);
+        eloop = echildren[0];
+
+        /* get the edges from the loop */
+        status = EG_getTopology(eloop, &eref, &oclass, &mtype, data, &nedge, &eedges,
+                                &senses);
+        CHECK_STATUS(EG_getTopology);
+
+        /* get the nodes and the curve from the first edge */
+        status = EG_getTopology(eedges[0], &ecurve, &oclass, &mtype, data, &nchild, &echildren,
+                                &senses);
+        CHECK_STATUS(EG_getTopology);
+        enodes[0] = echildren[0]; /* upper trailing edge */
+        enodes[1] = echildren[1]; /* leading edge        */
+
+        /* create the kulfan spline points with sensitivities */
+
+        /* mallocs required by Windows compiler */
+        MALLOC(pnts    , double, (3*NUMPTS(iudp)));
+        MALLOC(pnts_dot, double, (3*NUMPTS(iudp)));
+
+        /* points around airfoil ( upper and lower) */
+        for (ipnt = 0; ipnt < NUMPTS(iudp); ipnt++) {
+            zeta = TWOPI * ipnt / (NUMPTS(iudp)-1);
+            s    = (1 + cos(zeta)) / 2;
+
+            /* upper surface */
+            if ( ipnt < (NUMPTS(iudp)-1)/2){
+                n = udps[iudp].arg[2].size - 1;
+
+                shape     = 0;
+                shape_dot = 0;
+                for (r = 0; r <= n; r++) {
+                    pow1 = pow(1-s, n-r);
+                    pow2 = pow(  s,   r);
+                    K    = factorial(n) / factorial(r) / factorial(n-r);
+                    shape     += TWISTMAG(    iudp,r) * K * pow1 * pow2;
+                    shape_dot += TWISTMAG_DOT(iudp,r) * K * pow1 * pow2;
+                }
+
+                /* points for the spline fit */
+                pow1 = pow(  s, TOVERC(iudp,0));
+                pow2 = pow(1-s, TOVERC(iudp,1));
+                pnts[3*ipnt  ] = s;
+                pnts[3*ipnt+1] = pow1 * pow2 * shape + TWISTANGLE(iudp,0) * s;
+                pnts[3*ipnt+2] = 0;
+
+                /* velocity of the points for the spline fit */
+                pnts_dot[3*ipnt  ] = 0;
+                pnts_dot[3*ipnt+1] = pow1 * pow2 * shape_dot + TWISTANGLE_DOT(iudp,0) * s;
+                if (s   > 0) pnts_dot[3*ipnt+1] += pow1 * pow2 * shape * log(  s)
+                                                   * TOVERC_DOT(iudp,0);
+                if (1-s > 0) pnts_dot[3*ipnt+1] += pow1 * pow2 * shape * log(1-s)
+                                                   * TOVERC_DOT(iudp,1);
+                pnts_dot[3*ipnt+2] = 0;
+
+            /* leading edge */
+            } else if (ipnt == (NUMPTS(iudp)-1)/2) {
+                pnts[3*ipnt  ] = 0;
+                pnts[3*ipnt+1] = 0;
+                pnts[3*ipnt+2] = 0;
+
+                pnts_dot[3*ipnt  ] = 0;
+                pnts_dot[3*ipnt+1] = 0;
+                pnts_dot[3*ipnt+2] = 0;
+
+            /* lower surface */
+            } else if (ipnt > (NUMPTS(iudp)-1)/2) {
+                n = udps[iudp].arg[3].size - 1;
+
+                shape     = 0;
+                shape_dot = 0;
+                for (r = 0; r <= n; r++) {
+                    pow1 = pow(1-s, n-r);
+                    pow2 = pow(  s,   r);
+                    K    = factorial(n) / factorial(r) / factorial(n-r);
+                    shape     += TWISTMAG_DOT(    iudp,r) * K * pow1 * pow2;
+                    shape_dot += TWISTMAG_DOT(iudp,r) * K * pow1 * pow2;
+                }
+
+                /* points for the spline fit */
+                pow1 = pow(  s, TOVERC_DOT(iudp,0));
+                pow2 = pow(1-s, TOVERC_DOT(iudp,1));
+                pnts[3*ipnt  ] = s;
+                pnts[3*ipnt+1] = pow1 * pow2 * shape + TWISTANGLE(iudp,1) * s;
+                pnts[3*ipnt+2] = 0;
+
+                /* velocity of the points for the spline fit */
+                pnts_dot[3*ipnt  ] = 0;
+                pnts_dot[3*ipnt+1] = pow1 * pow2 * shape_dot + TWISTANGLE_DOT(iudp,1) * s;
+                if (s   > 0) pnts_dot[3*ipnt+1] += pow1 * pow2 * shape * log(  s)
+                                                   * TOVERC_DOT(iudp,0);
+                if (1-s > 0) pnts_dot[3*ipnt+1] += pow1 * pow2 * shape * log(1-s)
+                                                   * TOVERC_DOT(iudp,1);
+                pnts_dot[3*ipnt+2] = 0;
+            }
+        }
+
+        /* populate spline curve sensitivities */
+        sizes[0] = NUMPTS(iudp);
+        sizes[1] = KNOTS;
+        status = EG_approximate_dot(ecurve, 0, DXYTOL, sizes, pnts, pnts_dot);
+        CHECK_STATUS(EG_approximate_dot);
+
+        /* set the sensitivity of the Node at trailing edge */
+        ipnt = 0;
+        status = EG_setGeometry_dot(enodes[0], NODE, 0, NULL, &(pnts[3*ipnt]), &(pnts_dot[3*ipnt]));
+        CHECK_STATUS(EG_setGeometry_dot);
+
+
+        /* set the sensitivity of the Node at leading edge */
+        status = EG_getGeometry_dot(ecurve, &rdata, &rdata_dot);
+        CHECK_STATUS(EG_getGeometry_dot);
+
+        ipnt = (NUMPTS(iudp) - 1) / 2 + 3; /* index, with knot offset of 3 (cubic)*/
+        tle     = rdata[ipnt];        /* t-value (should be very close to (0,0,0) */
+        tle_dot = rdata_dot[ipnt];    /* t-value sensitivity */
+
+        status = EG_evaluate_dot(ecurve, &tle, &tle_dot, data, data_dot);
+        CHECK_STATUS(EG_evaluate_dot);
+        status = EG_setGeometry_dot(enodes[1], NODE, 0, NULL, data, data_dot);
+        CHECK_STATUS(EG_setGeometry_dot);
+
+
+        /* set Edge t-range sensitivity for upper surface */
+        tdata[0]     = 0;
+        tdata[1]     = tle;
+        tdata_dot[0] = 0;
+        tdata_dot[1] = tle_dot;
+
+        status = EG_setRange_dot(eedges[0], EDGE, tdata, tdata_dot);
+        CHECK_STATUS(EG_setRange_dot);
+
+        /* set Edge t-range sensitivity for lower surface */
+        tdata[0]     = tdata[1];
+        tdata[1]     = 1;
+        tdata_dot[0] = tdata_dot[1];
+        tdata_dot[1] = 0;
+
+        status = EG_setRange_dot(eedges[1], EDGE, tdata, tdata_dot);
+        CHECK_STATUS(EG_setRange_dot);
+
+
+        if (cache->sharpte == 0) {
+            /* get trailing edge line and the lower trailing edge node from the 3rd edge */
+            status = EG_getTopology(eedges[2], &eline, &oclass, &mtype, data, &nchild, &echildren,
+                                    &senses);
+            CHECK_STATUS(EG_getTopology);
+            enodes[2] = echildren[0]; /* lower trailing edge */
+
+            /* set the sensitivity of the Node at lower trailing edge */
+            ipnt = NUMPTS(iudp) - 1;
+            status = EG_setGeometry_dot(enodes[2], NODE, 0, NULL, &(pnts[3*ipnt]), &(pnts_dot[3*ipnt]));
+            CHECK_STATUS(EG_setGeometry_dot);
+
+            /* set the sensitivity of the line segment at trailing edge */
+            ipnt = NUMPTS(iudp) - 1;
+            data[0] = pnts[3*ipnt  ];
+            data[1] = pnts[3*ipnt+1];
+            data[2] = pnts[3*ipnt+2];
+            data[3] = pnts[0] - data[0];
+            data[4] = pnts[1] - data[1];
+            data[5] = pnts[2] - data[2];
+
+            data_dot[0] = pnts_dot[3*ipnt  ];
+            data_dot[1] = pnts_dot[3*ipnt+1];
+            data_dot[2] = pnts_dot[3*ipnt+2];
+            data_dot[3] = pnts_dot[0] - data_dot[0];
+            data_dot[4] = pnts_dot[1] - data_dot[1];
+            data_dot[5] = pnts_dot[2] - data_dot[2];
+
+            status = EG_setGeometry_dot(eline, CURVE, LINE, NULL, data, data_dot);
+            CHECK_STATUS(EG_setGeometry_dot);
+
+            /* set Edge t-range sensitivity */
+            tdata[0] = 0;
+            tdata[1] = sqrt(data[3]*data[3] + data[4]*data[4] + data[5]*data[5]);
+
+            tdata_dot[0] = 0;
+            tdata_dot[1] = (data[3]*data_dot[3] + data[4]*data_dot[4] + data[5]*data_dot[5])/tdata[1];
+
+            status = EG_setRange_dot(eedges[2], EDGE, tdata, tdata_dot);
+            CHECK_STATUS(EG_setRange_dot);
+        }
+
+        /* plane data */
+        data[0] = 0.;
+        data[1] = 0.;
+        data[2] = 0.;
+        data[3] = 1.; data[4] = 0.; data[5] = 0.;
+        data[6] = 0.; data[7] = 1.; data[8] = 0.;
+
+        /* set the sensitivity of the plane */
+        data_dot[0] = 0.;
+        data_dot[1] = 0.;
+        data_dot[2] = 0.;
+        data_dot[3] = 0.; data_dot[4] = 0.; data_dot[5] = 0.;
+        data_dot[6] = 0.; data_dot[7] = 0.; data_dot[8] = 0.;
+
+        status = EG_setGeometry_dot(eplane, SURFACE, PLANE, NULL, data, data_dot);
+        CHECK_STATUS(EG_setGeometry_dot);
+
+    } /* if (udps[iudp].data == NULL) */
+
+
+    /* find the ego entity */
+    if (entType == OCSM_NODE) {
+        status = EG_getBodyTopos(ebody, NULL, NODE, &nchild, &echildren);
+        CHECK_STATUS(EG_getBodyTopos);
+
+        stride = 0;
+        eent = echildren[entIndex-1];
+
+        EG_free(echildren); echildren = NULL;
+    } else if (entType == OCSM_EDGE) {
+        status = EG_getBodyTopos(ebody, NULL, EDGE, &nchild, &echildren);
+        CHECK_STATUS(EG_getBodyTopos);
+
+        stride = 1;
+        eent = echildren[entIndex-1];
+
+        EG_free(echildren); echildren = NULL;
+    } else if (entType == OCSM_FACE) {
+        status = EG_getBodyTopos(ebody, NULL, FACE, &nchild, &echildren);
+        CHECK_STATUS(EG_getBodyTopos);
+
+        stride = 2;
+        eent = echildren[entIndex-1];
+
+        EG_free(echildren); echildren = NULL;
+    } else {
+        printf("udpSensitivity: bad entType=%d\n", entType);
+        status = EGADS_GEOMERR;
+        goto cleanup;
+    }
+
+    /* get the velocities from the entity */
+    for (ipnt = 0; ipnt < npnt; ipnt++) {
+        status = EG_evaluate_dot(eent, &(uvs[stride*ipnt]), NULL, point, point_dot);
+        CHECK_STATUS(EG_evaluate_dot);
+
+        /* return the point velocity */
+        vels[3*ipnt  ] = point_dot[0];
+        vels[3*ipnt+1] = point_dot[1];
+        vels[3*ipnt+2] = point_dot[2];
+    }
+
+    status = EGADS_SUCCESS;
+
+cleanup:
+    EG_free(pnts);
+    EG_free(pnts_dot);
+    EG_free(rdata);
+    EG_free(rdata_dot);
+
+    return status;
+}
 

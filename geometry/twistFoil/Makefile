@@ -10,9 +10,9 @@ else
 ODIR  = .
 endif
 
-$(LDIR)/kulfan.so:	$(ODIR)/udpTwistFoil.o
-	touch $(LDIR)/twistFoil.so
-	rm $(LDIR)/twistFoil.so
+$(LDIR)/udpTwistFoil.so:	$(ODIR)/udpTwistFoil.o
+	touch $(LDIR)/udpTwistFoil.so
+	rm $(LDIR)/udpTwistFoil.so
 	$(CC) $(SOFLGS) -o $(LDIR)/twistFoil.so $(ODIR)/udpTwistFoil.o \
 		-L$(LDIR) -legads -lm $(RPATH)
 
@@ -20,7 +20,7 @@ $(ODIR)/udpTwistFoil.o:	udpTwistFoil.c $(IDIR)/udpUtilities.c $(IDIR)/udpUtiliti
 	$(CC) -c $(COPTS) $(DEFINE) -I$(IDIR) -I. \
 		udpTwistFoil.c -o $(ODIR)/udpTwistFoil.o
 
-test : $(LDIR)/kulfan.so
+test : $(LDIR)/udpTwistFoil.so
 	@date
 	@for f in design*.csm; do \
 	    date; \
@@ -34,4 +34,4 @@ clean:
 	(cd $(ODIR); rm -f udpTwistFoil.o )
 
 cleanall:	clean
-	(cd $(LDIR); rm -f twistFoil.so )
+	(cd $(LDIR); rm -f udpTwistFoil.so )

@@ -1,0 +1,708 @@
+######################################################################################################
+# TITLE: 100 PAX SUPERSONIC JET
+# ====================================================================================================
+# DEVELOPED BY BY: NATHAN CRANE, BARBARA FELIX, JAI AHUJA, CHRISTIAN PERRON
+# ====================================================================================================
+# CONVENTIONS:
+# 1) All units are in inches/degrees unless otherwise specified
+# 2) r = root, m = mid, t = tip, i = inboard section, o = outboard section LE = Leading Edge, 
+# TE = Trailing Edge, d<parameter> = change in parameter value, REF = reference value (constant)
+# l = length, x,y,z = coordinates
+# 3) chord = chord length of airfoil
+# 4) twist = airfoil twist about LE (convention: positive twist pushes TE in -z direction)
+# 5) ttc = thickness to chord ratio    
+# 6) sweep_LE = leading edge sweep angle
+# 7) proj_span = projected span i.e. distance along y axis (distance along wing is span in VSP)
+# 8) dihedral = dihedral angle of section (positive dihedral pushes wing up in +z)
+# 9) x/y/z_LE_eng vs engX/Y/Z: former refers to coordinates of the wing airfoil that is coincident 
+#    with the centreline of the engine while the latter refers to the coordinates of the engine 
+# 10) sweep_TE = sweep angle of wing TE (enforces straight TE - as required by Dr. Tai)
+######################################################################################################
+
+# 1 = EGADS output;
+# 2 = STEP files;
+# 3 = BREP files;
+# 4 = STL files;
+# 5 = IGES files;
+CFGPMTR output_format   1
+
+# 1 = 1 Solid Body;
+# 2 = 5 Bodies, 1 Files;
+# 3 = 5 Bodies, 5 File;
+CFGPMTR output_num      1
+
+# ====================================================================================================
+# DESIGN PARAMETERS
+# ====================================================================================================
+
+DESPMTR refArea 518400
+DESPMTR sweep_TE_i -1.442857572
+DESPMTR sweep_TE_o 1.474483939
+
+DESPMTR twist_r 1.195485995
+DESPMTR twist_m -0.943148022
+DESPMTR twist_t -0.7359171870000001
+
+DESPMTR taper_ratio_i 0.447593833
+DESPMTR taper_ratio_o 0.409521507
+
+DESPMTR AR 2.748110805
+DESPMTR rel_y_m 0.422069486
+DESPMTR dihedral_i 3.48685119
+DESPMTR dihedral_o -4.293804499
+
+
+# Nacelle 
+
+DESPMTR inlet_area          2959.63
+DESPMTR inlet_AR            1.0
+DESPMTR engX_offset         50
+DESPMTR eng_pitch_offset    0.0
+DESPMTR eng_roll_offset     0.0
+DESPMTR eng_min_ext         40.0
+DESPMTR eng_length          405.0
+
+# Landing gear length
+DESPMTR LG_length           159.6
+
+# Wing Location Reference Values
+DESPMTR z_LE_r_REF          -40
+DESPMTR x_TE_r_REF          1500
+DESPMTR y_r_REF             0.0
+
+
+# ====================================================================================================
+# FUSELAGE DESIGN PARAMETERS
+# ====================================================================================================
+
+
+DIMENSION   rx      7  1  1
+DIMENSION   rydown  7  1  1
+DIMENSION   ryup    7  1  1
+DIMENSION   x0      7  1  1
+DIMENSION   y0      7  1  1
+DIMENSION   ns      7  1  1
+DIMENSION   nn      7  1  1
+
+#               Start  Cabin   Cabin   Cabin   VARY       End
+DESPMTR rx      "0.1;    60.0;    63.0;      61.0;      55.0;      25.0;       0.1"
+DESPMTR rydown  "0.1;    70.0;    80.0;      76.0;      70.0;      25.0;       0.1"
+DESPMTR ryup    "0.1;    70.0;    66.0;      60.0;      55.0;      25.0;       0.1"
+DESPMTR x0      "0;      450.0;   800.0;    1403.3;     1510.0;   1825.0;     2000.0"
+DESPMTR y0      "-35.0;  10.0;     10.0;       1.0;      -2.0;       4.0;      7.0"
+DESPMTR ns       "0.0;    0.0;      0.0;       7.0;      5.0;       0.0;       0.0"
+DESPMTR nn       "0.0;    0.0;      0.0;       0.0;      0.0;       0.0;       0.0"
+
+# Tesellation parameters
+DIMENSION   params  1 3 0
+SET         params  "10.0; 5.0; 10.0;"
+
+# ====================================================================================================
+# ENGINE NACELLE SIZE
+# ====================================================================================================
+
+SET inlet_width     sqrt(inlet_area)/inlet_AR
+SET inlet_height    inlet_area/inlet_width
+
+SET nac_wall 5
+
+
+# ====================================================================================================
+# LOCAL DESIGN PARAMETERS, DESIGN RELATIONS (DRE), AND DESIGN RULES (DRU)
+# ====================================================================================================
+
+# Main DRU for engine location states that the engine must be placed on the inboard section of the 
+# wing for structural and aerodynamic reasons. Design relations below assume this rule is not violated
+
+# .....................................................................................................
+# Wing Planform Defition
+# .....................................................................................................
+
+SET span        sqrt(AR*refArea)
+
+SET y_r         y_r_REF
+SET y_t         span/2
+SET y_m         (y_t-y_r)*rel_y_m+y_r
+
+SET dy_mr       y_m-y_r
+SET dy_tm       y_t-y_m
+
+SET chord_r refArea/(dy_mr*(1+taper_ratio_i)+dy_tm*taper_ratio_i*(1+taper_ratio_o))
+SET chord_m chord_r*taper_ratio_i
+SET chord_t chord_m*taper_ratio_o
+
+SET x_LE_r      x_TE_r_REF-chord_r
+SET x_TE_m      x_TE_r_REF+tand(sweep_TE_i)*dy_mr
+SET x_LE_m      x_TE_m-chord_m
+SET x_TE_t      x_TE_m+tand(sweep_TE_o)*dy_tm
+SET x_LE_t      x_TE_t-chord_t
+
+SET z_LE_r      z_LE_r_REF
+SET z_TE_r      z_LE_r-(chord_r*sind(twist_r))
+SET z_LE_m      z_LE_r+dy_mr*tand(dihedral_i)
+SET z_TE_m      z_LE_m-(chord_m*sind(twist_m))
+SET z_LE_t      z_LE_m+dy_tm*tand(dihedral_o)
+SET z_TE_t      z_LE_t-(chord_t*sind(twist_t))
+
+SET ttc_r       31.51/chord_r
+SET ttc_m       10.5/chord_m
+SET ttc_t       2.5/chord_t
+
+SET sweep_LE_i  atand((x_LE_m-x_LE_r)/dy_mr)
+SET sweep_LE_o  atand((x_LE_t-x_LE_m)/dy_tm)
+
+
+# .....................................................................................................
+# DRE 1.0: Y LOCATION OF ENGINE MUST BE LENGTH OF LANDING GEAR PLUS HLAD OF ENGINE SPAN-WISE LENGTH
+# .....................................................................................................
+
+SET engY    LG_length+inlet_width
+
+
+# .....................................................................................................
+# DRE 2.0: X LOCATION OF ENGINE MUST BE 5 INCHES BEHINF WING LE AT SPAN LOCATION CORRESPONDING TO
+# NACELLE MOST OUTBOARD FACE
+# .....................................................................................................
+
+IFTHEN  engY+inlet_width GE  y_m   # if the location of engine most outboard face is in outboard wing
+   SET  x_LE_eng_c  x_LE_m+((x_LE_t-x_LE_m)/dy_tm)*(engY+inlet_width-y_m)
+
+ELSE
+   SET  x_LE_eng_c  x_LE_r+((x_LE_m-x_LE_r)/dy_mr)*(engY+inlet_width-y_r)
+
+ENDIF
+
+SET engX        x_LE_eng_c+engX_offset
+
+
+# .....................................................................................................
+# DRE 4.0 AND 5.O PITCH AND Z LOCATION OF ENGINE MUST CHANGE WITH WING DESIGN CHANGES
+# .....................................................................................................
+
+IFTHEN  engY    GE  y_m   # if the location of engine centerline is in outboard wing
+   SET  chord_eng   chord_m+((chord_t-chord_m)/dy_tm)*(engY-y_m)
+
+   SET  x_TE_eng    x_TE_m+((x_TE_t-x_TE_m)/dy_tm)*(engY-y_m)
+   SET  x_LE_eng    x_LE_m+((x_LE_t-x_LE_m)/dy_tm)*(engY-y_m)
+
+   SET  z_LE_eng    z_LE_m+((z_LE_t-z_LE_m)/dy_tm)*(engY-y_m)
+   SET  z_TE_eng    z_TE_m+((z_TE_t-z_TE_m)/dy_tm)*(engY-y_m)
+   SET  eng_roll    dihedral_o+eng_roll_offset
+
+ELSE
+   SET  chord_eng   chord_r+((chord_m-chord_r)/dy_mr)*(engY-y_r)
+
+   SET  x_TE_eng    x_TE_r_REF+((x_TE_m-x_TE_r_REF)/dy_mr)*(engY-y_r)
+   SET  x_LE_eng    x_LE_r+((x_LE_m-x_LE_r)/dy_mr)*(engY-y_r)
+
+   SET  z_LE_eng    z_LE_r+((z_LE_m-z_LE_r)/dy_mr)*(engY-y_r)
+   SET  z_TE_eng    z_TE_r+((z_TE_m-z_TE_r)/dy_mr)*(engY-y_r)
+   SET  eng_roll    dihedral_i+eng_roll_offset
+
+ENDIF
+
+SET eng_pitch   -asind((z_TE_eng-z_LE_eng)/chord_eng)+eng_pitch_offset    # Engine pitch angle
+SET engZ        z_LE_eng+(z_TE_eng-z_LE_eng)*(engX-x_LE_eng)/(x_TE_eng-x_LE_eng)
+
+IFTHEN x_TE_eng GE engX+eng_length-eng_min_ext   
+    SET engX x_TE_eng+eng_min_ext-eng_length
+ENDIF
+
+
+#.....................................................................................................
+# CALCULATE NEW AIRFOIL SECTIONS
+# ..................................................................................................... 
+
+# inboard section:
+
+SET y_m_i       y_r_REF+0.95*dy_mr
+SET chord_m_i   chord_r+((chord_m-chord_r)/dy_mr)*(y_m_i)
+SET x_TE_m_i    x_TE_r_REF+tand(sweep_TE_i)*y_m_i
+SET x_LE_m_i    x_TE_m_i-chord_m_i
+SET z_LE_m_i    z_LE_r_REF+y_m_i*tand(dihedral_i)
+SET twist_m_i   twist_r+((twist_m-twist_r)/dy_mr)*(y_m_i)
+SET ttc_m_i     ttc_r+((ttc_m-ttc_r)/dy_mr)*(y_m_i)
+
+# outboard section:
+
+SET y_m_o       0.05*dy_tm
+SET chord_m_o   chord_m+((chord_t-chord_m)/dy_tm)*(y_m_o)
+SET x_TE_m_o    x_TE_m+tand(sweep_TE_o)*y_m_o
+SET x_LE_m_o    x_TE_m_o-chord_m_o
+SET z_LE_m_o    z_LE_m+y_m_o*tand(dihedral_o)
+SET twist_m_o   twist_m+((twist_t-twist_m)/dy_tm)*(y_m_o)
+SET ttc_m_o     ttc_m+((ttc_t-ttc_m)/dy_tm)*(y_m_o)
+SET y_m_o       y_m_o+dy_mr
+
+
+# ====================================================================================================
+# CONSTRUCT AIRCRAFT output_modeL
+# ====================================================================================================
+
+# .....................................................................................................
+# WING
+# .....................................................................................................
+
+MARK  # Wing -y direction
+   
+   # Root Chord
+   UDPRIM biconvex thick ttc_r
+   SCALE chord_r
+   ROTATEZ -twist_r 0 0
+   TRANSLATE  x_LE_r  z_LE_r_REF -y_r_REF 
+
+   # Mid Chord Inboard
+   UDPRIM biconvex thick ttc_m_i
+   SCALE chord_m_i
+   ROTATEZ -twist_m_i 0 0
+   TRANSLATE x_LE_m_i z_LE_m_i -y_m_i
+
+   # Mid Chord Inboard
+   UDPRIM biconvex thick ttc_m_o
+   SCALE chord_m_o
+   ROTATEZ -twist_m_o 0 0
+   TRANSLATE x_LE_m_o z_LE_m_o -y_m_o
+
+   # Tip Chord
+   UDPRIM biconvex thick ttc_t
+   SCALE chord_t
+   ROTATEZ -twist_t 0 0
+   TRANSLATE  x_LE_t z_LE_t -y_t
+
+BLEND
+ROTATEX 90 0 0
+
+# ***************COMPONENT ID*********************
+SELECT body
+SELECT face 
+DIMENSION face_list @sellist.nrow @sellist.ncol
+SET face_list @sellist
+
+PATBEG i face_list.size
+    SELECT face face_list[i]
+    ATTRIBUTE capsGroup $WingEng
+    ATTRIBUTE CartBC 1
+    ATTRIBUTE _color $yellow
+PATEND
+#*************************************************
+
+# Store the wing solid body
+STORE wing_solid
+
+
+# .....................................................................................................
+# NACELLE
+# .....................................................................................................
+
+RESTORE wing_solid
+# Remove engine pitch and roll for nacelle construction
+ROTATEY -eng_pitch  engZ engX
+ROTATEX -eng_roll   engY engZ
+STORE wing_solid_rot 0 1
+
+# Get the wing lower surface
+EXTRACT 2
+STORE wing_lwr_surf 0 1
+
+# Get wing minus outside nacell patch
+BOX engX engY-inlet_width engZ-1000 1000 2*inlet_width 2000
+STORE nac_wing_cut 0 1
+SUBTRACT
+STORE wing_lwr_surf 1
+
+# Get wing-nacelle patch
+RESTORE wing_lwr_surf
+RESTORE nac_wing_cut
+INTERSECT
+
+# Store bounding box for later use
+SET nac_patch_zmin  @zmin
+SET nac_patch_zmax  @zmax
+SET nac_patch_ymin  @ymin
+SET nac_patch_ymax  @ymax
+SET nac_patch_xmin  @xmin
+SET nac_patch_xmax  @xmax
+
+SELECT edge engX engY engZ
+SET nac_LE_top_xcg  @xcg
+SET nac_LE_top_ycg  @ycg
+SET nac_LE_top_zcg  @zcg
+
+STORE wing_nac_intersect
+
+SET nac_LE_bot_xcg  nac_LE_top_xcg+tand(60)*inlet_height
+SET nac_LE_bot_ycg  nac_LE_top_ycg
+SET nac_LE_bot_zcg  nac_LE_top_zcg-inlet_height
+
+SKBEG       nac_LE_bot_xcg  nac_patch_ymin  nac_LE_bot_zcg
+    LINSEG  nac_LE_bot_xcg  nac_patch_ymax  nac_LE_bot_zcg
+    LINSEG  nac_patch_xmax  nac_patch_ymax  nac_LE_bot_zcg
+    LINSEG  nac_patch_xmax  nac_patch_ymin  nac_LE_bot_zcg
+    LINSEG  nac_LE_bot_xcg  nac_patch_ymin  nac_LE_bot_zcg
+SKEND
+REORDER 0 1
+STORE nac_bot_surf
+
+MARK
+   # Bottom surface
+   RESTORE nac_bot_surf
+
+   # Top surface
+   RESTORE wing_nac_intersect
+   
+RULE 1
+STORE nac_body 0 1
+
+###
+SELECT face
+SELECT sort $xcg
+SET i_nac_hgl   @sellist[1]
+SET i_nac_TE    @sellist[@nface]
+
+SELECT sort $zcg
+SET i_nac_bot   @sellist[1]
+
+SELECT sort $ycg
+SET i_nac_side_m @sellist[1]
+SET i_nac_side_p @sellist[@nface]
+
+EXTRACT "i_nac_side_m; i_nac_side_p; i_nac_bot"
+# ***************COMPONENT ID*********************
+SELECT body
+SELECT face 
+DIMENSION face_list @sellist.nrow @sellist.ncol
+SET face_list @sellist
+
+PATBEG i face_list.size
+    SELECT face face_list[i]
+    ATTRIBUTE capsGroup $WingEng
+    ATTRIBUTE CartBC 1
+    ATTRIBUTE _color $cyan
+PATEND
+#*************************************************
+STORE nac_shell
+
+RESTORE nac_body
+EXTRACT i_nac_hgl
+STORE nac_hgl_surf
+
+IFTHEN engX+eng_length LE nac_patch_zmax
+    SET eng_length   nac_patch_zmax-engX+1
+ENDIF
+
+SKBEG       engX+eng_length  nac_patch_ymin  nac_LE_bot_zcg
+    LINSEG  engX+eng_length  nac_patch_ymax  nac_LE_bot_zcg
+    LINSEG  engX+eng_length  nac_patch_ymax  nac_patch_zmin
+    LINSEG  engX+eng_length  nac_patch_ymin  nac_patch_zmin
+    LINSEG  engX+eng_length  nac_patch_ymin  nac_LE_bot_zcg
+SKEND
+STORE nac_exit_surf
+
+###
+MARK
+   RESTORE nac_body
+   EXTRACT i_nac_TE
+
+   RESTORE nac_exit_surf
+RULE 1
+STORE nac_ext_body 0 1
+
+SELECT face
+SELECT sort $zcg
+SET i_ext_bot @sellist[1]
+SET i_ext_top @sellist[@nface]
+
+SELECT sort $ycg
+SET i_ext_side_m @sellist[1]
+SET i_ext_side_p @sellist[@nface]
+
+EXTRACT "i_ext_side_m; i_ext_side_p; i_ext_bot; i_ext_top"
+# ***************COMPONENT ID*********************
+SELECT body
+SELECT face 
+DIMENSION face_list @sellist.nrow @sellist.ncol
+SET face_list @sellist
+
+PATBEG i face_list.size
+    SELECT face face_list[i]
+    ATTRIBUTE capsGroup $WingEng
+    ATTRIBUTE CartBC 1
+    ATTRIBUTE _color $cyan
+PATEND
+#*************************************************
+STORE nac_ext_shell
+
+
+# .....................................................................................................
+# FLOWTHROUGH
+# .....................................................................................................
+
+BOX x_LE_eng engY engZ-1000 1000 2*inlet_width 2000
+STORE nac_half_cut
+
+SKBEG      engX engY+nac_wall           nac_LE_top_zcg-nac_wall
+    LINSEG engX nac_patch_ymax-nac_wall nac_LE_top_zcg-nac_wall
+    LINSEG engX nac_patch_ymax-nac_wall nac_LE_bot_zcg+nac_wall
+    LINSEG engX engY+nac_wall           nac_LE_bot_zcg+nac_wall
+    LINSEG engX engY+nac_wall           nac_LE_top_zcg-nac_wall
+SKEND
+EXTRACT 0
+STORE nac_flow_frame
+
+MARK
+
+   RESTORE nac_hgl_surf
+   RESTORE nac_half_cut
+   INTERSECT
+   EXTRACT 0
+
+   RESTORE nac_flow_frame
+   TRANSLATE (nac_LE_bot_xcg+eng_length-nac_LE_top_xcg)/2 0 0
+
+   RESTORE nac_exit_surf
+   RESTORE nac_half_cut
+   INTERSECT
+   EXTRACT 0
+
+BLEND 0 0 1
+# ***************COMPONENT ID*********************
+SELECT body
+SELECT face 
+DIMENSION face_list @sellist.nrow @sellist.ncol
+SET face_list @sellist
+
+PATBEG i face_list.size
+    SELECT face face_list[i]
+    ATTRIBUTE capsGroup $Flowthrough
+    ATTRIBUTE CartBC 4
+    ATTRIBUTE _color $red
+PATEND
+#*************************************************
+STORE flowthrough_y_p
+
+MARK
+
+   RESTORE nac_hgl_surf
+   RESTORE nac_half_cut
+   SUBTRACT
+   EXTRACT 0
+
+   RESTORE nac_flow_frame
+   MIRROR 0 1 0 engY
+   TRANSLATE (nac_LE_bot_xcg+eng_length-nac_LE_top_xcg)/2 0 0
+
+   RESTORE nac_exit_surf
+   RESTORE nac_half_cut
+   SUBTRACT
+   EXTRACT 0
+
+BLEND 0 0 1
+# ***************COMPONENT ID*********************
+SELECT body
+SELECT face 
+DIMENSION face_list @sellist.nrow @sellist.ncol
+SET face_list @sellist
+
+PATBEG i face_list.size
+    SELECT face face_list[i]
+    ATTRIBUTE capsGroup $Flowthrough
+    ATTRIBUTE CartBC 4
+    ATTRIBUTE _color $red
+PATEND
+#*************************************************
+STORE flowthrough_y_m
+
+
+# .....................................................................................................
+# MAKE FUSELAGE
+# .....................................................................................................
+
+MARK
+    PATBEG    i 7
+    UDPARG supell   rx rx[i,1]  ry_s rydown[i,1] ry_n ryup[i,1]
+    UDPRIM supell   n_s ns[i,1] n_n nn[i,1]
+    ROTATEY         90  0  0
+    TRANSLATE       x0[i,1]     y0[i,1]      0.0
+    PATEND
+BLEND
+ROTATEX         90  0  0
+
+# ***************COMPONENT ID*********************
+SELECT body
+SELECT face 
+DIMENSION face_list @sellist.nrow @sellist.ncol
+SET face_list @sellist
+
+PATBEG i face_list.size
+    SELECT face face_list[i]
+    ATTRIBUTE capsGroup $Fuselage
+    ATTRIBUTE CartBC 2
+    ATTRIBUTE _color $magenta
+PATEND
+#*************************************************
+
+STORE fuselage_body
+
+
+# .....................................................................................................
+# MAKE VERTICAL TAIL
+# .....................................................................................................
+
+MARK
+   UDPRIM biconvex thick 0.05
+   SCALE 375
+   TRANSLATE  1520 0.1 0
+   UDPRIM biconvex thick 0.06
+   SCALE 116.67
+   TRANSLATE  1860.0 0.1 170.0
+BLEND
+
+# ***************COMPONENT ID*********************
+SELECT body
+SELECT face 
+DIMENSION face_list @sellist.nrow @sellist.ncol
+SET face_list @sellist
+
+PATBEG i face_list.size
+    SELECT face face_list[i]
+    ATTRIBUTE capsGroup $VTP
+    ATTRIBUTE CartBC 3
+    ATTRIBUTE _color $blue
+PATEND
+#*************************************************
+
+STORE vtp_body
+
+
+# .....................................................................................................
+# ASEMBLE NACELLE-FLOWTHROUGH-WING
+# .....................................................................................................
+
+MARK
+
+   RESTORE nac_shell
+   RESTORE nac_ext_shell
+   RESTORE flowthrough_y_m
+   RESTORE flowthrough_y_p
+
+   RESTORE wing_solid_rot
+   EXTRACT "1;3;4"
+
+   RESTORE wing_lwr_surf 1
+
+COMBINE 5
+# Restore nacelle pitch and roll
+ROTATEY eng_pitch  engZ engX
+ROTATEX eng_roll   engY engZ
+STORE wing_nac_body
+
+# .....................................................................................................
+# ASSEMBLE AIRCRAFT
+# .....................................................................................................
+
+# Set file extension for output files
+IFTHEN output_format EQ 2
+    SET file_ext $.stp
+ELSEIF output_format EQ 3
+    SET file_ext $.brep
+ELSEIF output_format EQ 4
+    SET file_ext $.stl
+ELSEIF output_format EQ 5
+    SET file_ext $.iges
+ELSE
+    SET file_ext $.egads
+ENDIF
+
+IFTHEN output_num EQ 1
+
+    MARK
+        RESTORE fuselage_body
+        RESTORE vtp_body
+
+        RESTORE wing_nac_body
+
+        RESTORE wing_nac_body
+        MIRROR 0 1 0
+    UNION 1
+
+    SET filename    $geom+!file_ext
+    DUMP !filename
+
+ELSEIF output_num EQ 2
+
+    MARK
+
+        RESTORE wing_solid
+        MIRROR 0 1 0
+        RESTORE wing_solid
+        UNION
+
+        MARK
+            RESTORE nac_shell
+            RESTORE nac_ext_shell
+            RESTORE flowthrough_y_m
+            RESTORE flowthrough_y_p
+        COMBINE 1
+
+        # Restore nacelle pitch and roll
+        ROTATEY eng_pitch  engZ engX
+        ROTATEX eng_roll   engY engZ
+
+        STORE eng_body 0 1
+
+        RESTORE eng_body
+        MIRROR 0 1 0
+
+        RESTORE fuselage_body
+        RESTORE vtp_body
+
+    SET filename    $geom+!file_ext
+    DUMP !filename 0 1
+
+ELSEIF output_num EQ 3
+
+    RESTORE wing_solid
+    MIRROR 0 1 0
+    RESTORE wing_solid
+    UNION
+
+    SET filename    $wing+!file_ext
+    DUMP !filename
+
+    MARK
+        RESTORE nac_shell
+        RESTORE nac_ext_shell
+        RESTORE flowthrough_y_m
+        RESTORE flowthrough_y_p
+    COMBINE 1
+
+    # Restore nacelle pitch and roll
+    ROTATEY eng_pitch  engZ engX
+    ROTATEX eng_roll   engY engZ
+
+    STORE eng_body 0 1
+
+    SET filename    $portEngine+!file_ext
+    DUMP !filename
+
+    RESTORE eng_body
+    MIRROR 0 1 0
+
+    SET filename    $starboardEngine+!file_ext
+    DUMP !filename
+
+    RESTORE fuselage_body
+    SET filename    $fuselage+!file_ext
+    DUMP !filename
+
+    RESTORE vtp_body
+    SET filename    $vtp+!file_ext
+    DUMP !filename
+
+ELSE
+    ASSERT output_num LE 3
+
+ENDIF
+
+END
+

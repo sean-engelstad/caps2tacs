@@ -1,4 +1,4 @@
-# /home/sengelstad6/git/caps2tacs/examples/naca_thick/myCAPS/Scratch/capsRestart.cpc written by ocsmSave (v1.21)
+# /home/seanfireball1/git/caps2tacs/examples/naca_thick/myCAPS/Scratch/capsRestart.cpc written by ocsmSave (v1.21)
 
 # Constant, Design, and Output Parameters:
 cfgpmtr   nspar       3.00000
@@ -9,9 +9,9 @@ despmtr   taper       0.50000
 despmtr   twist       5.00000
 despmtr   lesweep      30.00000
 despmtr   dihedral       5.00000
-despmtr   tc0       0.04000
-despmtr   tcf       0.04000
-despmtr   camb0       0.00000
+despmtr   tc0       0.10000
+despmtr   tcf       0.05000
+despmtr   camb0       0.10000
 despmtr   cambf       0.00000
 cfgpmtr   rootFaces     131.00000
 cfgpmtr   rootEdges     200.00000

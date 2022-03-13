@@ -1,5 +1,5 @@
-# design0o2 (kulfan2)
-# written by John Dannenhoffer
+#testing the twistFoil command
+#written by Sean Engelstad
 
 despmtr toverc 0.1
 despmtr twistAOA 30
@@ -9,13 +9,13 @@ despmtr phaseShift 10
 despmtr   span      2.0
 
 mark
-   udparg   udpTwistFoil tover toverc
-   udparg    udpTwistFoil twistAOA twistAOA
-   udparg   udpTwistFoil twistMag twistMag
-   udprim   udpTwistFoil phaseShift phaseShift
+   udparg   twistFoil toverc toverc
+   udparg   twistFoil twistAngle twistAOA
+   udparg   twistFoil twistMag twistMag
+   udprim   twistFoil phaseShift phaseShift
 
-   udparg    twistFoil tover toverc
-   udparg    twistFoil twistAOA twistAOA
+   udparg    twistFoil toverc toverc
+   udparg    twistFoil twistAngle twistAOA
    udparg    twistFoil twistMag twistMag
    udprim    twistFoil phaseShift phaseShift
    translate 0  0  span
