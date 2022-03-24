@@ -12,8 +12,8 @@ def capsFunction(egadsAim,tacsAim):
     #setup function for panel.csm
     
     #Egads Aim section, for mesh
-    egadsAim.input.Edge_Point_Min = 20
-    egadsAim.input.Edge_Point_Max = 25
+    egadsAim.input.Edge_Point_Min = 15
+    egadsAim.input.Edge_Point_Max = 20
     
     egadsAim.input.Mesh_Elements = "Quad"
     
@@ -105,8 +105,7 @@ def capsFunction(egadsAim,tacsAim):
 
     useDVR = True
     for i in range(3):
-        if (useDVR):
-            DVRdict[thickDVs[i]] = getThicknessDVR(thickDVs[i])
+        if (useDVR): DVRdict[thickDVs[i]] = getThicknessDVR(thickDVs[i])
         DVdict[thickDVs[i]] = getThicknessDV(capsGroups[i],thick0)
         
     
@@ -130,7 +129,7 @@ def pytacsFunction(obj, datFile):
     obj.FEASolver.initialize()
     
     #choose the functions to evaluate
-    evalFuncs = ['wing_mass', 'ks_vmfailure','compliance']
+    evalFuncs = ['wing_mass', 'ks_vmfailure']
 
     # vec = obj.FEASolver.assembler.createVec()
     # vec.getArray()[:] = 1.0
@@ -146,14 +145,18 @@ def pytacsFunction(obj, datFile):
     for caseID in SPs:
        SPs[caseID].addFunction('wing_mass', functions.StructuralMass)
        SPs[caseID].addFunction('ks_vmfailure', functions.KSFailure, safetyFactor=1.5, ksWeight=1000.0)
-       SPs[caseID].addFunction('compliance', functions.Compliance)
+       #SPs[caseID].addFunction('compliance', functions.Compliance)
     # Solve each structural problem and write solutions
     func = {}; sens = {}
     for caseID in SPs:
         SPs[caseID].solve()
+        print("finished pytacs solve")
         SPs[caseID].evalFunctions(func,evalFuncs=evalFuncs)
+        print("finished pytacs funcs")
         SPs[caseID].evalFunctionsSens(sens,evalFuncs=evalFuncs)
+        print("finished pytacs sens")
         SPs[caseID].writeSolution(outputDir=os.path.dirname(__file__))
+        print("finished pytacs file")
 
     #store function and sensitivity values    
     obj.func = func
@@ -248,7 +251,7 @@ class Optimization(ParOpt.Problem):
 ## Optimization problem defined here ##
 
 #run options: check, run, eval
-option = "eval"
+option = "check"
 
 myOpt = Optimization()
 
@@ -280,8 +283,8 @@ if (option == "check"):
         return myOpt.problem.grad[compKey]
     
     D = [40.0, 6.0,  0.5,  5.0,  30.0, 5.0, 0.1, 0.1, 0.1 ]
-    funcs = [mass,stress,compliance]
-    gradients = [massGrad,stressGrad,complianceGrad]
+    funcs = [mass,stress]
+    gradients = [massGrad,stressGrad]
     names = ["mass","stress","compl"]
     myOpt.problem.checkGradients(D,funcs,gradients,names, h=1e-4)
 

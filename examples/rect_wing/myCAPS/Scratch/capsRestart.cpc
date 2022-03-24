@@ -9,7 +9,7 @@ despmtr   taper       0.50000
 despmtr   twist       5.00000
 despmtr   lesweep      30.00000
 despmtr   dihedral       5.00000
-despmtr   thickRatio       0.12000
+despmtr   toverc       0.12000
 cfgpmtr   rootFaces     131.00000
 cfgpmtr   rootEdges     200.00000
 cfgpmtr   bottomFaces     125.00000
@@ -22,8 +22,8 @@ set       span cmean*aspect
 set       sspan span/2
 set       croot 2*cmean/(1+taper)
 set       ctip croot*taper
-set       troot croot*thickRatio
-set       ttip ctip*thickRatio
+set       troot croot*toverc
+set       ttip ctip*toverc
 set       xtip sspan*tand(lesweep)
 set       ytip sspan*tand(dihedral)
 set       margin 0.1*croot

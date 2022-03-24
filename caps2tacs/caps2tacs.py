@@ -9,6 +9,7 @@ Created on Tue Jan 11 13:54:34 2022
 import os
 import numpy as np
 import pyCAPS
+import matplotlib.pyplot as plt
 
 class Caps2Tacs:
     def __init__(self, csmFile, capsFunction, pytacsFunction, desvars):
@@ -166,11 +167,13 @@ class Caps2Tacs:
         self.tacs.input.Property = propDict
 
         #update DVR dictionary
-        if (useDVR and self.hasThickDVs):
-            self.tacs.input.Design_Variable_Relation = DVRdict
+        if (useDVR and self.hasThickDVs): self.tacs.input.Design_Variable_Relation = DVRdict
         
         #update DV dictionary
         self.tacs.input.Design_Variable = DVdict
+
+        print("design dict: ",designDict)
+        print("updated design")
     
     def runTACS(self):
         #build the BDF and data file with CAPS preanalysis
@@ -178,12 +181,15 @@ class Caps2Tacs:
         
         #run tacs aim preanalysis to generate BDF and DAT file
         self.tacs.preAnalysis()
+        print("ran preanalysis()")
         
         #read the data file
         datFile = os.path.join(self.tacs.analysisDir, self.tacs.input.Proj_Name + '.dat')
         
         #compute function values and sensitivities for each SP in your Pytacs method
         self.pytacsFunction(self, datFile)
+
+        print("ran pytacs()")
         
     def combineSensitivities(self):
         
@@ -234,7 +240,7 @@ class Caps2Tacs:
         #get number of nodes
         subSens = self.sens[funcKeysList[0]]['Xpts']
         self.nnodes = int(len(subSens)/3)
-        print(self.nnodes)
+        #print(self.nnodes)
     
     def printSensitivity(self):
         #print our dfdX sensitivity to CAPS
@@ -274,26 +280,32 @@ class Caps2Tacs:
         
         #run aim postanalysis
         self.tacs.postAnalysis()
-        #print("finished postanalysis\n")
+        print("ran postAnalysis()")
     
     def storeResults(self):
         #store the function and full df/dD sensitivities from CAPS aim dynout attributes
         #initialize gradient variable
+        self.func = {}
         self.grad = {}
-        
+        print("starting store Results")
         #loop over each pytacs function
         for key in self.funcKeys:
+            print("starting function: ",key)
             self.func[key] = self.tacs.dynout[key].value
             self.grad[key] = np.zeros((self.nvar))
             #print(len(self.grad[key]))
 
             #loop over each design variable to get the full df/dD gradient
+            print("struct sens: ",self.sens[key]['struct'])
             ind = 0
+            thickind = 0
             for desvar in self.desvars:
+                print("storing desvar: ",key, ", ", desvar)
                 if ("thick" in desvar):
                     #use struct here, #print(self.sens[key]['struct'])
                     #struct includes geomDVs in same order
-                    self.grad[key][ind] = self.sens[key]['struct'][ind]
+                    self.grad[key][ind] = self.sens[key]['struct'][thickind]
+                    thickind += 1
                 else:
                     self.grad[key][ind] = self.tacs.dynout[key].deriv(desvar)
                 ind += 1
@@ -321,108 +333,48 @@ class Caps2Tacs:
         #names = ["mass","ks_vm_stress"]
         #x = np.ones(2)
             #x = np.ones((self.nvar))
-        method = 1
         
         nfuncs = len(functions)
         
-        if (method == 1):
-            errors = []
-            for i in range(nfuncs):
-                myfunc = functions[i]
-                mygrad = gradients[i]
-                name = names[i]
-                
-                x = np.array(x)        
-                p = np.random.uniform(size=x.shape)
-                p = p / np.linalg.norm(p)
-                
-                func1 = myfunc(x-p*h)
-                func2 = myfunc(x+p*h)
-                
-                fdGrad = (func2-func1)/2/h
-                cgrad = mygrad(x)
-                print("func {}, grad {}".format(name, cgrad))
-                #print(mygrad,p)
-                directDeriv = np.dot(cgrad, p)
-                
-                error = (directDeriv - fdGrad)/fdGrad
-                errors.append(error)
-            for i in range(nfuncs):
-                name = names[i]; error = errors[i]
-                print(name + ' FD gradient error',error)
-        elif (method == 2):
-            fdGrads = {}
-            cgrads = {}
-            avgErrors = {}
-            for i in range(nfuncs):
-                myfunc = functions[i]
-                mygrad = gradients[i]
-                name = names[i]
-                
-                cgrad = mygrad(x)
-                nx = len(cgrad)
-                fdGrad = np.zeros((nx))
-                
-                
-                for direc in range(nx):
-                    ei = np.zeros((nx))
-                    ei[direc] = 1
-                    
-                    fdGrad[direc] = (myfunc(x+ei*h)-myfunc(x-ei*h))/2/h
-                
-                avgError = np.linalg.norm(fdGrad - cgrad)/np.linalg.norm(fdGrad)
-                
-                fdGrads[str(i)] = fdGrad
-                cgrads[str(i)] = cgrad
-                avgErrors[str(i)] = avgError
-                
-            for i in range(nfuncs):
-                print("grad compare for " + names[i])
-                print("finite diff grad ",fdGrads[str(i)])
-                print("chain rule grad ",cgrads[str(i)])
-                print("avg comp rel error ",avgErrors[str(i)])
-        elif (method == 3):
-            #examine how well gradient predicts change in function
-            errors = []
-            nh = 1
-            hvec = [1e-8,1e-7,1e-6,1e-5,1e-4,1e-3,1e-2,1e-1,1e0]
-            hvec = [1e-4]
-            hvec = np.array(hvec)
-            dfExact = np.zeros((nh))
-            dfPred = np.zeros((nh))
-            D = np.array(x) #desvars  
-
-            for hi in range(nh):
-                for i in range(nfuncs):
-                    h = hvec[hi]
-                    myfunc = functions[i]
-                    mygrad = gradients[i]
-                    name = names[i]
-                    
-                    p = np.random.uniform(size=D.shape)
-                    p = p / np.linalg.norm(p)
-                    
-                    func1 = myfunc(D)
-                    cgrad = mygrad(D)
-                    func2 = myfunc(D+p*h)
-                    
-                    dfExact[hi] = func2-func1
-                    dfPred[hi] = np.dot(cgrad, p) * h
+        errors = []
+        for i in range(nfuncs):
+            myfunc = functions[i]
+            mygrad = gradients[i]
+            name = names[i]
+            
+            x = np.array(x)        
+            p = np.random.uniform(size=x.shape)
+            p = p / np.linalg.norm(p)
+            
+            func1 = myfunc(x-p*h)
+            func2 = myfunc(x+p*h)
+            
+            fdGrad = (func2-func1)/2/h
+            cgrad = mygrad(x)
+            print("func {}, grad {}".format(name, cgrad))
+            #print(mygrad,p)
+            directDeriv = np.dot(cgrad, p)
+            
+            error = (directDeriv - fdGrad)/fdGrad
+            errors.append(error)
+        for i in range(nfuncs):
+            name = names[i]; error = errors[i]
+            print(name + ' FD gradient error',error)
                 
 
-            for fi in range(nfuncs):
-                name = names[i]; error = errors[i]
-                string1 = 'd' + name + '_exact'
-                string2 = 'd' + name + 'pred'
-                print(name + ' FD gradient error',error)
+        # for fi in range(nfuncs):
+        #     name = names[i]; error = errors[i]
+        #     string1 = 'd' + name + '_exact'
+        #     string2 = 'd' + name + 'pred'
+        #     print(name + ' FD gradient error',error)
 
-                fig, ax = plt.subplot(nfuncs,1,fi)
-                ax.loglog(hvec,dfExact,'b-',label=string1)
-                ax.loglog(hvec, dfPred,'g-',label=string2)
-                ax.xlabel('step size h in deltaD')
-                ax.ylabel('change in f(D)')
-                ax.legend()
-            plt.show()
+        #     fig, ax = plt.subplot(nfuncs,1,fi)
+        #     ax.loglog(hvec,dfExact,'b-',label=string1)
+        #     ax.loglog(hvec, dfPred,'g-',label=string2)
+        #     ax.xlabel('step size h in deltaD')
+        #     ax.ylabel('change in f(D)')
+        #     ax.legend()
+        # plt.show()
 
 
 def getThicknessDV(capsGroup, thickness):

@@ -9361,7 +9361,7 @@ DESVAR*               4         lesweep              0.              0. *0
 *0                   0.              0. 
 DESVAR*               5           taper              0.              0. *0      
 *0                   0.              0. 
-DESVAR*               6      thickRatio              0.              0. *0      
+DESVAR*               6          toverc              0.              0. *0      
 *0                   0.              0. 
 DESVAR*               7           twist              0.              0. *0      
 *0                   0.              0. 

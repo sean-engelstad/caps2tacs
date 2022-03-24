@@ -75,7 +75,7 @@ def capsFunction(egadsAim,tacsAim):
                                      "twist" : {},
                                      "lesweep" : {},
                                      "dihedral" : {},
-                                     "thickRatio" : {}}
+                                     "toverc" : {}}
 
 def pytacsFunction(obj, datFile):
     useMPI = True
@@ -204,7 +204,7 @@ def pytacsFunction(obj, datFile):
 class Optimization(ParOpt.Problem):
     def __init__(self):
         #design variable order used for parOpt, and this will build the design dict
-        desvarList = ["area","aspect","taper","twist","lesweep","dihedral","thickRatio"]
+        desvarList = ["area","aspect","taper","twist","lesweep","dihedral","toverc"]
         
         self.problem = Caps2Tacs("rect_wing.csm", capsFunction, pytacsFunction, desvarList)
         
@@ -287,7 +287,7 @@ class Optimization(ParOpt.Problem):
 ## Optimization problem defined here ##
 
 #run options: check, run
-option = "run"
+option = "check"
 
 myOpt = Optimization()
 

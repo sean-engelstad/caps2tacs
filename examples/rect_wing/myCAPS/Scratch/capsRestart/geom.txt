@@ -7,7 +7,7 @@ taper
 twist
 lesweep
 dihedral
-thickRatio
+toverc
 rootFaces
 rootEdges
 bottomFaces

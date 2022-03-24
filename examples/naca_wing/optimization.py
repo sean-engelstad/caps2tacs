@@ -12,8 +12,8 @@ def capsFunction(egadsAim,tacsAim):
     #setup function for panel.csm
     
     #Egads Aim section, for mesh
-    egadsAim.input.Edge_Point_Min = 10
-    egadsAim.input.Edge_Point_Max = 15
+    egadsAim.input.Edge_Point_Min = 15
+    egadsAim.input.Edge_Point_Max = 20
     
     egadsAim.input.Mesh_Elements = "Quad"
     

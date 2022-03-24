@@ -14,7 +14,7 @@ despmtr  taper  0.5  -
 despmtr  twist  5.0  deg
 despmtr  lesweep  30.0 deg
 despmtr  dihedral 5.0  deg
-despmtr  thickRatio 0.12 -
+despmtr  toverc 0.12 -
 
 #internal parameters
 set  cmean sqrt(area/aspect)
@@ -22,8 +22,8 @@ set  span cmean*aspect
 set  sspan span/2
 set  croot 2*cmean/(1+taper)
 set  ctip croot*taper
-set  troot croot*thickRatio
-set  ttip  ctip*thickRatio
+set  troot croot*toverc
+set  ttip  ctip*toverc
 set  xtip sspan*tand(lesweep)
 set  ytip sspan*tand(dihedral)
 set  margin 0.1*croot
