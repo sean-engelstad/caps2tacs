@@ -12,12 +12,12 @@ def capsFunction(egadsAim,tacsAim):
     #setup function for panel.csm
     
     #Egads Aim section, for mesh
-    egadsAim.input.Edge_Point_Min = 15
-    egadsAim.input.Edge_Point_Max = 20
+    egadsAim.input.Edge_Point_Min = 3
+    egadsAim.input.Edge_Point_Max = 5
     
     egadsAim.input.Mesh_Elements = "Quad"
     
-    egadsAim.input.Tess_Params = [.25,.01,15]
+    egadsAim.input.Tess_Params = [.05,.01,15]
     
     #increase the precision in the BDF file
     tacsAim.input.File_Format = "Large"

@@ -1,0 +1,14 @@
+	Warning: the ability to provide design variable relation data within Design_Variable input is deprecated and will be removed in the future. Please use provide relation data via "Design_Variable_Relation" instead.
+	Design_Variable_Relation name - thick1
+	No "variableType" specified for Design_Variable_Relation tuple thick1, defaulting to "Property"
+	Design_Variable name - thick2
+	Warning: the ability to provide design variable relation data within Design_Variable input is deprecated and will be removed in the future. Please use provide relation data via "Design_Variable_Relation" instead.
+	Design_Variable_Relation name - thick2
+	No "variableType" specified for Design_Variable_Relation tuple thick2, defaulting to "Property"
+	Design_Variable name - thick3
+	Warning: the ability to provide design variable relation data within Design_Variable input is deprecated and will be removed in the future. Please use provide relation data via "Design_Variable_Relation" instead.
+	Design_Variable_Relation name - thick3
+	No "variableType" specified for Design_Variable_Relation tuple thick3, defaulting to "Property"
+	Design_Variable name - twist
+^C^C^C^C^C
+

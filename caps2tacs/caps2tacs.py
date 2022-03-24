@@ -304,7 +304,7 @@ class Caps2Tacs:
                 if ("thick" in desvar):
                     #use struct here, #print(self.sens[key]['struct'])
                     #struct includes geomDVs in same order
-                    self.grad[key][ind] = self.sens[key]['struct'][thickind]
+                    self.grad[key][ind] = self.sens[key]['struct'][ind]
                     thickind += 1
                 else:
                     self.grad[key][ind] = self.tacs.dynout[key].deriv(desvar)
