@@ -85,24 +85,6 @@ def capsFunction(egadsAim,tacsAim):
     for geomDV in geomDVs:
         DVdict[geomDV] = {}
 
-    #thick design variables
-    # def makeThicknessDV(capsGroup, thickness):
-    #   desvar    = {"groupName" : capsGroup,
-    #           "initialValue" : thickness,
-    #           "lowerBound" : thickness*0.5,
-    #           "upperBound" : thickness*1.5,
-    #           "maxDelta"   : thickness*0.1,
-    #           "fieldName" : "T"}
-    #           #"variableType" : "Property"}
-    #   return desvar
-    # def makeThicknessDVR(capsGroup):
-    #     DVR = {"variableType": "Property",
-    #     "fieldName" : "T",
-    #     "constantCoeff" : 0.0,
-    #     "groupName" : capsGroup,
-    #     "linearCoeff" : 1.0}
-    #     return DV
-
     useDVR = True
     for i in range(3):
         if (useDVR): DVRdict[thickDVs[i]] = getThicknessDVR(thickDVs[i])
@@ -130,12 +112,6 @@ def pytacsFunction(obj, datFile):
     
     #choose the functions to evaluate
     evalFuncs = ['wing_mass', 'ks_vmfailure']
-
-    # vec = obj.FEASolver.assembler.createVec()
-    # vec.getArray()[:] = 1.0
-    # obj.FEASolver.assembler.applyBCs(vec)
-    # obj.FEASolver.assembler.setVariables(vec)
-    # obj.FEASolver.outputViewer.writeToFile('bcs.f5')
     
     #read the bdf & dat file into pytacs FEAsolver
     #SPs represents "StructuralProblems"
@@ -204,7 +180,9 @@ def massGrad(x):
 
     return massGrad
 
+#initial design variable
 x0 = [40.0, 6.0,  0.5,  5.0,  30.0, 5.0, 0.03, 0.05, 0.02]
 
+#minimize the mass with scipy minimize
 res = minimize(mass, x0, method="BFGS", jac=massGrad, options={'disp': True})
 print(res)
