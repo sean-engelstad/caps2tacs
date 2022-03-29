@@ -307,6 +307,7 @@ class Caps2Tacs:
                     self.grad[key][ind] = self.sens[key]['struct'][ind]
                     thickind += 1
                 else:
+                    print(self.tacs.dynout[key].deriv(desvar))
                     self.grad[key][ind] = self.tacs.dynout[key].deriv(desvar)
                 ind += 1
         #print("finished storing results\n")

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
 from caps2tacs import *
+from paropt import ParOpt
 from mpi4py import MPI
 from tacs.pytacs import pyTACS
-from scipy.optimize import minimize
 from tacs import functions
 import numpy as np
 import matplotlib.pyplot as plt
@@ -162,49 +162,165 @@ def pytacsFunction(obj, datFile):
     obj.func = func
     obj.sens = sens
 
-desvarList = ["area","aspect","taper","twist","lesweep","dihedral","thick1", "thick2", "thick3"]
-problem = Caps2Tacs("naca_small.csm", capsFunction, pytacsFunction, desvarList)
+#ParOpt Optimization Class
+class Optimization(ParOpt.Problem):
+    def __init__(self):
+        desvarList = ["area","aspect","taper","twist","lesweep","dihedral","thick1", "thick2", "thick3"]
+        self.problem = Caps2Tacs("naca_small.csm", capsFunction, pytacsFunction, desvarList)
+        
+        self.nvar = 9 #number of design var
+        ncon = 1 #number of constraint
+        nblock = 1
+        super(Optimization, self).__init__(MPI.COMM_SELF, self.nvar, ncon, nblock)
 
-def getNames(self):
-    #get the function names for mass, stress, and compliance
-    massStr = ""
-    stressStr = ""
-    compStr = ""
-    for key in self.problem.funcKeys:
-        #print("Key: ",key)
-        if ("mass" in key):
-            massStr = key
-        if ("failure" in key):
-            stressStr = key
-        if ("compliance" in key):
-            compStr = key
-    return massStr, stressStr, compStr
+        self.objs = []
+        self.start = True
+    def getVarsAndBounds(self, x, lb, ub):
+        """Get the variable values and bounds"""
+        #area, aspectRatio, taper, twistAngle, leadingEdgeSweep, dihedral, ribT, sparT, OMLT
+        lowerBounds =   [20.0, 3.0,  0.3,  1.0,  3.0,  1.0, 0.01, 0.01, 0.01 ]
+        initialValues = [40.0, 6.0,  0.5,  5.0,  30.0, 5.0, 0.03, 0.05, 0.02]
+        upperBounds =   [100.0,10.0, 1.0, 10.0, 50.0, 20.0, 0.1, 0.1, 0.1]
+        for i in range(self.nvar):
+            lb[i] = lowerBounds[i]
+            ub[i] = upperBounds[i]
+            x[i] = initialValues[i]
+        return
+    def getNames(self):
+        massStr = ""
+        stressStr = ""
+        compStr = ""
+        for key in self.problem.funcKeys:
+            #print("Key: ",key)
+            if ("mass" in key):
+                massStr = key
+            if ("failure" in key):
+                stressStr = key
+            if ("compliance" in key):
+                compStr = key
+        return massStr, stressStr, compStr
+    def evalObjCon(self, x):
+        """
+        Return the objective, constraint and fail flag
+        """
+        self.problem.solveStructuralProblem(x[:])
+        
+        massKey, stressKey, compKey = self.getNames()
+        
+        if (self.start):
+        	self.start = False
+        	self.maxStress = self.problem.func[stressKey]
 
-def mass(x):
-    #solve structural problem with design variable x
-    problem.solveStructuralProblem(x[:])
+        fail = 0
+        obj = self.problem.func[massKey] #mass
+	
+        con = np.zeros(1, dtype=ParOpt.dtype)
+        con[0] = 1 - self.problem.func[stressKey] / self.maxStress
 
-    #get the names of each function
-    massKey, stressKey, compKey = getNames()
+        self.objs.append(obj)
 
-    #get the 
-    mass = problem.func[massKey]
+        return fail, obj, con
 
-    return mass
+    def evalObjConGradient(self, x, g, A):
+        """
+        Return the objective, constraint and fail flag
+        """
+        #run the solver
+        self.problem.solveStructuralProblem(x[:])
+        
+        massKey, stressKey, compKey = self.getNames()
+        
+        fail = 0
+        g[:] = self.problem.grad[compKey]
+        A[0][:] = -1 * self.problem.grad[stressKey]
+        
+        return fail
+    def printObjCon(self, x):
+        fail, obj, con = self.evalObjCon(x)
+        print("\n")
+        print("Objective Value: ",obj)
+        print("Constraint Value(s): ",con)
+    def plotObjectiveProgress(self):
+        niter = len(self.objs)
+        iterations = np.arange(0,niter)
+        plt.plot(iterations, self.objs, 'k-')
+        plt.xlabel('Iteration #')
+        plt.ylabel('mass obj')
+        plt.show()
 
-def massGrad(x):
-    #solve structural problem with design variable x
-    problem.solveStructuralProblem(x[:])
+## Optimization problem defined here ##
 
-    #get the names of each function
-    massKey, stressKey, compKey = getNames()
+#run options: check, run, eval
+option = "check"
 
-    #get mass gradient
-    massGrad = problem.grad[massKey]
+myOpt = Optimization()
 
-    return massGrad
 
-x0 = [40.0, 6.0,  0.5,  5.0,  30.0, 5.0, 0.03, 0.05, 0.02]
+if (option == "check"):
+    def mass(x):
+        myOpt.problem.solveStructuralProblem(x[:])
+        massKey, stressKey, compKey = myOpt.getNames()
+        return myOpt.problem.func[massKey]
+    def stress(x):
+        myOpt.problem.solveStructuralProblem(x[:])
+        massKey, stressKey, compKey = myOpt.getNames()
+        return myOpt.problem.func[stressKey]
+    def compliance(x):
+        myOpt.problem.solveStructuralProblem(x[:])
+        massKey, stressKey, compKey = myOpt.getNames()
+        return myOpt.problem.func[compKey]
+    def massGrad(x):
+        myOpt.problem.solveStructuralProblem(x[:])
+        massKey, stressKey, compKey = myOpt.getNames()
+        return myOpt.problem.grad[massKey]
+    def stressGrad(x):
+        myOpt.problem.solveStructuralProblem(x[:])
+        massKey, stressKey, compKey = myOpt.getNames()
+        return myOpt.problem.grad[stressKey]
+    def complianceGrad(x):
+        myOpt.problem.solveStructuralProblem(x[:])
+        massKey, stressKey, compKey = myOpt.getNames()
+        return myOpt.problem.grad[compKey]
+    
+    D = [40.0, 6.0,  0.5,  5.0,  30.0, 5.0, 0.1, 0.1, 0.1 ]
+    funcs = [mass,stress]
+    gradients = [massGrad,stressGrad]
+    names = ["mass","stress","compl"]
+    myOpt.problem.checkGradients(D,funcs,gradients,names, h=1e-4)
 
-res = minimize(mass, x0, method="BFGS", jac=massGrad, options={'disp': True})
-print(res)
+elif (option == "run"):
+    filename = "paropt.out"
+    options = {
+        'algorithm': 'ip',
+        'abs_res_tol': 1e-4,
+        'starting_point_strategy': 'affine_step',
+        'barrier_strategy': 'monotone',
+        'start_affine_multiplier_min': 0.01,
+        'penalty_gamma': 1000.0,
+        'qn_subspace_size': 10,
+        'qn_type': 'bfgs',
+        'output_file': filename}
+    
+    # Set up the optimizer
+    opt = ParOpt.Optimizer(myOpt, options)
+    
+    #Set a new starting point
+    opt.optimize()
+    D, z, zw, zl, zu = opt.getOptimizedPoint()
+    
+    #print optimized information
+    myOpt.printObjCon(D)
+    print("\n")
+    print("Final design: ")
+    myOpt.problem.printDesignVariables(D[:])
+
+    myOpt.plotObjectiveProgress()
+
+elif (option == "eval"):
+    D = [40.0, 6.0,  0.5,  5.0,  30.0, 5.0, 0.1 ,0.1, 0.1 ]
+    p = np.random.uniform(size=6)
+    p = p / np.linalg.norm(p)
+    h = 1.0e-5
+    print(p)
+    print(p*h)
+    myOpt.problem.solveStructuralProblem(D)
