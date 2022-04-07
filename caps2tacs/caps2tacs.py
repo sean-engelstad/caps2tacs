@@ -45,6 +45,7 @@ class Caps2Tacs:
         #initialize egads and tacs AIMs and store them in self.tacs and self.egads
         
         #initialize the caps analysis object 
+        print(csmFile)
         self.caps = pyCAPS.Problem('myCAPS', capsFile=csmFile, outLevel=0)
         
         #store caps geometry and desvars
@@ -55,19 +56,30 @@ class Caps2Tacs:
         self.egads = self.caps.analysis.create(aim="egadsTessAIM")
         
         #generate tacs aim
-        self.tacs = self.caps.analysis.create(aim = "tacsAIM", name = "tacs")
-        
-        #put design variables into tacsAim
-        # I now require you to put in the design variable dict
-        # make sure the same order as your x vector
-#        desDict = {}
-#        for key in self.desvars:
-#            desDict[key] = {}
-#        self.tacs.input.Design_Variable = desDict
+        self.tacsAim = self.caps.analysis.create(aim = "tacsAIM", name = "tacs")
         
         #run the setupFunction to set mesh, geom, load, mat prop settings 
         #in egads and tacs aims
-        capsFunction(self.egads, self.tacs)
+        capsGroups = capsFunction(self.egads, self.tacsAim)
+
+        #setup geomDVs and thickDVs
+        DVdict = {}
+        DVRdict = {}
+        thick0 = 0.02
+
+        thickCt = 0
+        for desvar in self.desvars:
+            if ("thick" in desvar):
+                #add thickDV entry into DV_Relations and DV Dicts
+                DVRdict[desvar] = self.makeThicknessDVR(desvar)
+                DVdict[desvar] = self.makeThicknessDV(capsGroups[thickCt],thick0)
+            else: #geomDV, add empty entry into DV dicts
+                DVdict[desvar] = {}
+            
+            
+        
+        self.tacsAim.input.Design_Variable = DVdict   
+        if (self.hasThickDVs): self.tacsAim.input.Design_Variable_Relation = DVRdict
         
     def solveStructuralProblem(self, D=None):
         #to solve each structural problem, we update our design variables
@@ -99,7 +111,7 @@ class Caps2Tacs:
             self.updateDesign(design)
             
         #run the tacs preanalysis
-        self.tacs.preAnalysis()
+        self.tacsAim.preAnalysis()
         
     def makeDesignDict(self, D):
         D = np.array(D)
@@ -108,15 +120,17 @@ class Caps2Tacs:
             designDict[self.desvars[i]] = D[i]
         return designDict
 
-    #methods to be called outside of the class
     def makeThicknessDV(self, capsGroup, thickness):
+        #thick DV dictionary for Design_Variable Dict
         desvar    = {"groupName" : capsGroup,
               "initialValue" : thickness,
               "lowerBound" : thickness*0.5,
               "upperBound" : thickness*1.5,
               "maxDelta"   : thickness*0.1}
         return desvar
+    
     def makeThicknessDVR(self, DVname):
+        #thick DV dictionary for Design_Variable_Relation Dict
         DVR = {"variableType": "Property",
         "fieldName" : "T",
         "constantCoeff" : 0.0,
@@ -128,29 +142,25 @@ class Caps2Tacs:
         #print out the design variables
         if (output): print("Design variables: ", designDict)
 
-        #use DesignVarRelations or DesignVariable
-        useDVR = True
-
         #grab the property dictionary to edit thick DVs
-        propDict = self.tacs.input.Property
+        propDict = self.tacsAim.input.Property
         
         #grab the DVR dict if using relations
-        if (useDVR and self.hasThickDVs):
-            DVRdict = self.tacs.input.Design_Variable_Relation
+        if (self.hasThickDVs):
+            DVRdict = self.tacsAim.input.Design_Variable_Relation
         
         #grab the DVdict to update it
-        DVdict = self.tacs.input.Design_Variable
+        DVdict = self.tacsAim.input.Design_Variable
 
         #loop over each design variable
         for deskey in designDict:
 
-            #assume all thickness desvars are thick##
+            #assume all thickness desvars are "thick##" for numbers "##"
             if ("thick" in deskey):
                 thickness = designDict[deskey]
 
-                if (useDVR):
-                    capsGroup = DVRdict[deskey]["groupName"]
-                    DVRdict[deskey] = self.makeThicknessDVR(deskey)
+                capsGroup = DVRdict[deskey]["groupName"]
+                DVRdict[deskey] = self.makeThicknessDVR(deskey)
 
                 #also update the DVs too
                 capsGroup = DVdict[deskey]["groupName"]
@@ -164,27 +174,27 @@ class Caps2Tacs:
                 self.geom.despmtr[deskey].value = designDict[deskey]
             
         #update the new property dictionary w/ thicknesses
-        self.tacs.input.Property = propDict
+        self.tacsAim.input.Property = propDict
 
         #update DVR dictionary
-        if (useDVR and self.hasThickDVs): self.tacs.input.Design_Variable_Relation = DVRdict
+        if (self.hasThickDVs): self.tacsAim.input.Design_Variable_Relation = DVRdict
         
         #update DV dictionary
-        self.tacs.input.Design_Variable = DVdict
+        self.tacsAim.input.Design_Variable = DVdict
 
-        print("design dict: ",designDict)
-        print("updated design")
+        #print("design dict: ",designDict)
+        #print("updated design")
     
     def runTACS(self):
         #build the BDF and data file with CAPS preanalysis
         #then run pytacs on the data file, computing func, sens
         
         #run tacs aim preanalysis to generate BDF and DAT file
-        self.tacs.preAnalysis()
+        self.tacsAim.preAnalysis()
         print("ran preanalysis()")
         
         #read the data file
-        datFile = os.path.join(self.tacs.analysisDir, self.tacs.input.Proj_Name + '.dat')
+        datFile = os.path.join(self.tacsAim.analysisDir, self.tacsAim.input.Proj_Name + '.dat')
         
         #compute function values and sensitivities for each SP in your Pytacs method
         self.pytacsFunction(self, datFile)
@@ -248,7 +258,7 @@ class Caps2Tacs:
         #available in dynout variables
         
         #where to print .sens file
-        sensFilename = os.path.join(self.tacs.analysisDir, self.tacs.input.Proj_Name+".sens")
+        sensFilename = os.path.join(self.tacsAim.analysisDir, self.tacsAim.input.Proj_Name+".sens")
         
         #open the file
         with open(sensFilename, "w") as f:
@@ -279,7 +289,7 @@ class Caps2Tacs:
                         f.write("{} {} {}\n".format(cSens[nodeind,0], cSens[nodeind,1], cSens[nodeind,2]))
         
         #run aim postanalysis
-        self.tacs.postAnalysis()
+        self.tacsAim.postAnalysis()
         print("ran postAnalysis()")
     
     def storeResults(self):
@@ -291,7 +301,7 @@ class Caps2Tacs:
         #loop over each pytacs function
         for key in self.funcKeys:
             print("starting function: ",key)
-            self.func[key] = self.tacs.dynout[key].value
+            self.func[key] = self.tacsAim.dynout[key].value
             self.grad[key] = np.zeros((self.nvar))
             #print(len(self.grad[key]))
 
@@ -307,8 +317,8 @@ class Caps2Tacs:
                     self.grad[key][ind] = self.sens[key]['struct'][ind]
                     thickind += 1
                 else:
-                    print(self.tacs.dynout[key].deriv(desvar))
-                    self.grad[key][ind] = self.tacs.dynout[key].deriv(desvar)
+                    print(self.tacsAim.dynout[key].deriv(desvar))
+                    self.grad[key][ind] = self.tacsAim.dynout[key].deriv(desvar)
                 ind += 1
         #print("finished storing results\n")
         #print(self.grad)
@@ -361,34 +371,3 @@ class Caps2Tacs:
         for i in range(nfuncs):
             name = names[i]; error = errors[i]
             print(name + ' FD gradient error',error)
-                
-
-        # for fi in range(nfuncs):
-        #     name = names[i]; error = errors[i]
-        #     string1 = 'd' + name + '_exact'
-        #     string2 = 'd' + name + 'pred'
-        #     print(name + ' FD gradient error',error)
-
-        #     fig, ax = plt.subplot(nfuncs,1,fi)
-        #     ax.loglog(hvec,dfExact,'b-',label=string1)
-        #     ax.loglog(hvec, dfPred,'g-',label=string2)
-        #     ax.xlabel('step size h in deltaD')
-        #     ax.ylabel('change in f(D)')
-        #     ax.legend()
-        # plt.show()
-
-
-def getThicknessDV(capsGroup, thickness):
-    desvar    = {"groupName" : capsGroup,
-          "initialValue" : thickness,
-          "lowerBound" : thickness*0.5,
-          "upperBound" : thickness*1.5,
-          "maxDelta"   : thickness*0.1}
-    return desvar
-def getThicknessDVR(DVname):
-    DVR = {"variableType": "Property",
-    "fieldName" : "T",
-    "constantCoeff" : 0.0,
-    "groupName" : DVname,
-    "linearCoeff" : 1.0}
-    return DVR

@@ -11,7 +11,7 @@ cfgpmtr  nrib  1  -
 despmtr  area  40  len^2
 despmtr  aspect  6.0  -
 despmtr  taper  0.5  -
-despmtr  twist  5.0  deg
+despmtr  ctwist  5.0  deg
 despmtr  lesweep  30.0 deg
 despmtr  dihedral 5.0  deg
 despmtr tc0 0.1
@@ -36,7 +36,7 @@ udprim  naca thickness tc0 Camber camb0
 scale  croot
 udprim  naca thickness tcf Camber cambf
 scale		ctip
-rotatez		-twist	0		0
+rotatez		-ctwist	0		0
 translate	xtip	ytip	-sspan
 loft		0
 attribute	OML	0
@@ -46,7 +46,7 @@ store OML
 #dump	OML.egads	1
    
 #spar parameters
-set 	ctipEff		ctip*cosd(twist)
+set 	ctipEff		ctip*cosd(ctwist)
 
 #spars
 patbeg		ispar		nspar

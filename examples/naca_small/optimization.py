@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
-from caps2tacs import *
+from caps2tacs import Caps2Tacs
 from mpi4py import MPI
 from tacs.pytacs import pyTACS
 from scipy.optimize import minimize
@@ -74,25 +74,12 @@ def capsFunction(egadsAim,tacsAim):
     
     # Set loads
     tacsAim.input.Load = {"lift": liftload }
-                                     
-    #geom design variables
-    DVdict = {}
-    DVRdict = {}
-    geomDVs = ["area","aspect", "taper", "twist", "lesweep", "dihedral"]
-    capsGroups = ["rib", "spar", "OML"]
-    thickDVs = ["thick1", "thick2", "thick3"]
-    thick0 = 0.02
-    for geomDV in geomDVs:
-        DVdict[geomDV] = {}
 
-    useDVR = True
-    for i in range(3):
-        if (useDVR): DVRdict[thickDVs[i]] = getThicknessDVR(thickDVs[i])
-        DVdict[thickDVs[i]] = getThicknessDV(capsGroups[i],thick0)
-        
-    
-    tacsAim.input.Design_Variable = DVdict   
-    if (useDVR): tacsAim.input.Design_Variable_Relation = DVRdict
+    #return the capsGroups you want to have thickDVs in that order
+    #[thick1, thick2, thick3]
+    capsDVgroups = ["rib", "spar", "OML"]
+
+    return capsDVgroups
         
 
 def pytacsFunction(obj, datFile):
@@ -138,15 +125,15 @@ def pytacsFunction(obj, datFile):
     obj.func = func
     obj.sens = sens
 
-desvarList = ["area","aspect","taper","twist","lesweep","dihedral","thick1", "thick2", "thick3"]
+desvarList = ["area","aspect","taper","ctwist","lesweep","dihedral","thick1", "thick2", "thick3"]
 problem = Caps2Tacs("naca_small.csm", capsFunction, pytacsFunction, desvarList)
 
-def getNames(self):
+def getNames():
     #get the function names for mass, stress, and compliance
     massStr = ""
     stressStr = ""
     compStr = ""
-    for key in self.problem.funcKeys:
+    for key in problem.funcKeys:
         #print("Key: ",key)
         if ("mass" in key):
             massStr = key
@@ -182,7 +169,8 @@ def massGrad(x):
 
 #initial design variable
 x0 = [40.0, 6.0,  0.5,  5.0,  30.0, 5.0, 0.03, 0.05, 0.02]
+bnds = (9*[0.01],9*[100])
 
 #minimize the mass with scipy minimize
-res = minimize(mass, x0, method="BFGS", jac=massGrad, options={'disp': True})
+res = minimize(mass, x0, method="BFGS", jac=massGrad, bounds=bnds,options={'disp': True})
 print(res)

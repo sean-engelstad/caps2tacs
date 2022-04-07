@@ -6,7 +6,7 @@ cfgpmtr   nrib       1.00000
 despmtr   area      40.00000
 despmtr   aspect       6.00000
 despmtr   taper       0.50000
-despmtr   twist       5.00000
+despmtr   ctwist       5.00000
 despmtr   lesweep      30.00000
 despmtr   dihedral       5.00000
 despmtr   tc0       0.10000
@@ -35,12 +35,12 @@ udprim    naca   thickness   tc0   Camber   camb0
 scale     croot   0   0   0
 udprim    naca   thickness   tcf   Camber   cambf
 scale     ctip   0   0   0
-rotatez   -twist   0   0
+rotatez   -ctwist   0   0
 translate xtip   ytip   -sspan
 loft      0
 attribute OML   0
 store     OML   0   0
-set       ctipEff ctip*cosd(twist)
+set       ctipEff ctip*cosd(ctwist)
 patbeg    ispar   nspar
    set       frac ispar/(nspar+1)
    set       dx frac*(croot-ctipEff)-xtip

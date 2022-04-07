@@ -12,8 +12,8 @@ def capsFunction(egadsAim,tacsAim):
     #setup function for panel.csm
     
     #Egads Aim section, for mesh
-    egadsAim.input.Edge_Point_Min = 5
-    egadsAim.input.Edge_Point_Max = 10
+    egadsAim.input.Edge_Point_Min = 10
+    egadsAim.input.Edge_Point_Max = 15
     
     egadsAim.input.Mesh_Elements = "Quad"
     
@@ -78,7 +78,7 @@ def capsFunction(egadsAim,tacsAim):
     #geom design variables
     DVdict = {}
     DVRdict = {}
-    geomDVs = ["area","aspect", "taper", "twist", "lesweep", "dihedral"]
+    geomDVs = ["area","aspect", "taper", "ctwist", "lesweep", "dihedral"]
     capsGroups = ["rib", "spar", "OML"]
     thickDVs = ["thick1", "thick2", "thick3"]
     thick0 = 0.02
@@ -165,7 +165,7 @@ def pytacsFunction(obj, datFile):
 #ParOpt Optimization Class
 class Optimization(ParOpt.Problem):
     def __init__(self):
-        desvarList = ["area","aspect","taper","twist","lesweep","dihedral","thick1", "thick2", "thick3"]
+        desvarList = ["area","aspect","taper","ctwist","lesweep","dihedral","thick1", "thick2", "thick3"]
         self.problem = Caps2Tacs("naca_small.csm", capsFunction, pytacsFunction, desvarList)
         
         self.nvar = 9 #number of design var
@@ -215,7 +215,7 @@ class Optimization(ParOpt.Problem):
         obj = self.problem.func[massKey] #mass
 	
         con = np.zeros(1, dtype=ParOpt.dtype)
-        con[0] = 1 - self.problem.func[stressKey] / self.maxStress
+        con[0] = 1 - self.problem.func[stressKey]
 
         self.objs.append(obj)
 
@@ -231,7 +231,7 @@ class Optimization(ParOpt.Problem):
         massKey, stressKey, compKey = self.getNames()
         
         fail = 0
-        g[:] = self.problem.grad[compKey]
+        g[:] = self.problem.grad[massKey]
         A[0][:] = -1 * self.problem.grad[stressKey]
         
         return fail

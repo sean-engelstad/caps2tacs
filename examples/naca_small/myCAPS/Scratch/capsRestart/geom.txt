@@ -4,7 +4,7 @@ nrib
 area
 aspect
 taper
-twist
+ctwist
 lesweep
 dihedral
 tc0
