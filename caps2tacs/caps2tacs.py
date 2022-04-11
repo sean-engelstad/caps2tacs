@@ -73,6 +73,7 @@ class Caps2Tacs:
                 #add thickDV entry into DV_Relations and DV Dicts
                 DVRdict[desvar] = self.makeThicknessDVR(desvar)
                 DVdict[desvar] = self.makeThicknessDV(capsGroups[thickCt],thick0)
+                thickCt += 1
             else: #geomDV, add empty entry into DV dicts
                 DVdict[desvar] = {}
             

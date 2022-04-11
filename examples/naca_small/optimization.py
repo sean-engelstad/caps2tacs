@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def capsFunction(egadsAim,tacsAim):
-    #setup function for panel.csm
+    #setup function for naca_small.csm
     
     #Egads Aim section, for mesh
     egadsAim.input.Edge_Point_Min = 5

@@ -1,3 +1,17 @@
-2 0
-plateLength
-plateWidth
+16 0
+nspar
+nrib
+area
+aspect
+taper
+ctwist
+lesweep
+dihedral
+tc0
+tcf
+camb0
+cambf
+rootFaces
+rootEdges
+bottomFaces
+rootNodes

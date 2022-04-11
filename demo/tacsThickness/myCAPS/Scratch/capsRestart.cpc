@@ -1,26 +1,93 @@
 # /home/sengelstad6/git/caps2tacs/demo/tacsThickness/myCAPS/Scratch/capsRestart.cpc written by ocsmSave (v1.21)
 
 # Constant, Design, and Output Parameters:
-despmtr   plateLength       0.50000
-despmtr   plateWidth       1.00000
+CFGPMTR   nspar       1.00000
+CFGPMTR   nrib       1.00000
+DESPMTR   area      40.00000
+DESPMTR   aspect       6.00000
+DESPMTR   taper       0.50000
+DESPMTR   ctwist       5.00000
+DESPMTR   lesweep      30.00000
+DESPMTR   dihedral       5.00000
+DESPMTR   tc0       0.10000
+DESPMTR   tcf       0.05000
+DESPMTR   camb0       0.10000
+DESPMTR   cambf       0.00000
+CFGPMTR   rootFaces      11.00000
+CFGPMTR   rootEdges      13.00000
+CFGPMTR   bottomFaces       2.00000
+CFGPMTR   rootNodes       6.00000
 
 # Global Attributes:
 
 # Branches:
-skbeg     0   0   0   0
-   linseg    plateLength   0   0
-skend     0
-extrude   0   plateWidth   0
-select    face
-attribute capsGroup   $plate
-attribute capsLoad   $plate
-select    body
-attribute capsAIM   $egadsTessAIM;tacsAIM
-patbeg    i   4
-   select    edge   i
-attribute capsConstraint   $edge
-   select    node   i
-attribute capsConstraint   $edge
-patend
+SET       cmean sqrt(area/aspect)
+SET       span cmean*aspect
+SET       sspan span/2
+SET       croot 2*cmean/(1+taper)
+SET       ctip croot*taper
+SET       xtip sspan*tand(lesweep)
+SET       ytip sspan*tand(dihedral)
+SET       margin 0.02*cmean
+SET       ybot -0.2*croot-margin
+SET       ytop 0.2*croot+ytip+margin
+UDPRIM    naca   thickness   tc0   Camber   camb0
+SCALE     croot   0   0   0
+UDPRIM    naca   thickness   tcf   Camber   cambf
+SCALE     ctip   0   0   0
+ROTATEZ   -ctwist   0   0
+TRANSLATE xtip   ytip   -sspan
+LOFT      0
+ATTRIBUTE OML   0
+STORE     OML   0   0
+SET       ctipEff ctip*cosd(ctwist)
+PATBEG    ispar   nspar
+   SET       frac ispar/(nspar+1)
+   SET       dx frac*(croot-ctipEff)-xtip
+   SET       hyp sqrt(sspan*sspan+dx*dx)
+   BOX       0   ybot   margin   0   ytop-ybot   -hyp-2*margin
+   SET       localSweep atand(dx/sspan)
+   ROTATEY   localSweep   0   0
+   TRANSLATE frac*croot   0   0
+   SELECT    face
+ATTRIBUTE capsGroup   !$spar
+ATTRIBUTE spar   ispar
+PATEND
+PATBEG    irib   nrib
+   SET       dxmax max(croot,xtip+ctipEff)+2*margin
+   SET       zcoord -(irib)*sspan/(nrib+1)
+   BOX       0   ybot   zcoord   dxmax   ytop-ybot   0
+   SELECT    face
+ATTRIBUTE capsGroup   !$rib
+   UNION     0   0   0
+   PATBEG    foo   ifzero(irib-1,nspar-1,0)
+      UNION     0   0   0
+   PATEND
+PATEND
+RESTORE   OML   0
+INTERSECT none   1   0
+RESTORE   OML   0
+HOLLOW    0   0   0
+SELECT    face
+ATTRIBUTE capsGroup   $OML
+UNION     0   0   0
+SELECT    body
+ATTRIBUTE capsAIM   $egadsTessAIM;tacsAIM
+PATBEG    find   2
+   SELECT    face   !rootFaces[1,find]
+ATTRIBUTE capsConstraint   $wingRoot
+PATEND
+PATBEG    eind   5
+   SELECT    edge   !rootEdges[1,eind]
+ATTRIBUTE capsConstraint   $wingRoot
+PATEND
+PATBEG    nind   4
+   SELECT    node   !rootNodes[1,nind]
+ATTRIBUTE capsConstraint   $wingRoot
+PATEND
+PATBEG    find   4
+   SELECT    face   !bottomFaces[1,find]
+ATTRIBUTE capsLoad   $bottomWing
+PATEND
 
-end
+END
