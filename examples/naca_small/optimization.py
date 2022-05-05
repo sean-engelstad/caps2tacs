@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
-from caps2tacs import Caps2Tacs
+from caps2tacs.caps2tacs import Caps2Tacs
 from mpi4py import MPI
 from tacs.pytacs import pyTACS
 from scipy.optimize import minimize
@@ -113,20 +113,42 @@ def pytacsFunction(obj, datFile):
     func = {}; sens = {}
     for caseID in SPs:
         SPs[caseID].solve()
-        print("finished pytacs solve")
         SPs[caseID].evalFunctions(func,evalFuncs=evalFuncs)
-        print("finished pytacs funcs")
         SPs[caseID].evalFunctionsSens(sens,evalFuncs=evalFuncs)
-        print("finished pytacs sens")
         SPs[caseID].writeSolution(outputDir=os.path.dirname(__file__))
-        print("finished pytacs file")
 
     #store function and sensitivity values    
     obj.func = func
     obj.sens = sens
 
-desvarList = ["area","aspect","taper","ctwist","lesweep","dihedral","thick1", "thick2", "thick3"]
-problem = Caps2Tacs("naca_small.csm", capsFunction, pytacsFunction, desvarList)
+
+
+
+#thickDVs to capsGroups
+#thick1,thick2,thick3 
+#rib,spar,OML
+
+#DVs: "area","aspect","taper","lesweep","dihedral","thick1", "thick2", "thick3", "twist"
+x0temp = [40.0, 6.0,  0.5, 30.0, 5.0, 0.03, 0.05, 0.02, 5.0]
+nDV = len(x0temp)
+
+#investigating error where shapeDVs have to be first alphabetically then structDVs
+alphabetCorr = False
+
+if (alphabetCorr):
+    desvarList = ["area","aspect","taper","ctwist","lesweep","dihedral","thick1", "thick2", "thick3"]
+    csmFile = "naca_small.csm"
+    x0 = np.zeros((nDV))
+    x0[0:3] = x0temp[0:3]
+    x0[3] = x0temp[-1]
+    x0[4:] = x0temp[3:8]
+
+else:
+    desvarList = ["area","aspect","taper","lesweep","dihedral","thick1", "thick2", "thick3", "twist"]
+    csmFile = "naca_small2.csm"
+    x0 = x0temp
+
+problem = Caps2Tacs(csmFile, capsFunction, pytacsFunction, desvarList)
 
 def getNames():
     #get the function names for mass, stress, and compliance
@@ -168,9 +190,15 @@ def massGrad(x):
     return massGrad
 
 #initial design variable
-x0 = [40.0, 6.0,  0.5,  5.0,  30.0, 5.0, 0.03, 0.05, 0.02]
-bnds = (9*[0.01],9*[100])
 
-#minimize the mass with scipy minimize
-res = minimize(mass, x0, method="BFGS", jac=massGrad, bounds=bnds,options={'disp': True})
-print(res)
+#mode "eval" or "opt"
+mode = "eval"
+
+if (mode == "eval"):
+    problem.solveStructuralProblem(x0)
+
+elif (mode == "opt"):
+    bnds = (nDV*[0.01],nDV*[100])
+    #minimize the mass with scipy minimize
+    res = minimize(mass, x0, method="BFGS", jac=massGrad, bounds=bnds,options={'disp': True})
+    print(res)

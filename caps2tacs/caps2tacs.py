@@ -45,7 +45,7 @@ class Caps2Tacs:
         #initialize egads and tacs AIMs and store them in self.tacs and self.egads
         
         #initialize the caps analysis object 
-        print(csmFile)
+        print("\nOpening {}...".format(csmFile))
         self.caps = pyCAPS.Problem('myCAPS', capsFile=csmFile, outLevel=0)
         
         #store caps geometry and desvars
@@ -298,31 +298,31 @@ class Caps2Tacs:
         #initialize gradient variable
         self.func = {}
         self.grad = {}
-        print("starting store Results")
+        print("\nStoring functions and gradients...")
         #loop over each pytacs function
         for key in self.funcKeys:
-            print("starting function: ",key)
+            
             self.func[key] = self.tacsAim.dynout[key].value
             self.grad[key] = np.zeros((self.nvar))
-            #print(len(self.grad[key]))
+
+            print("Function {} = {:5f}".format(key,self.func[key]))
 
             #loop over each design variable to get the full df/dD gradient
-            print("struct sens: ",self.sens[key]['struct'])
+            #print("struct sens: ",self.sens[key]['struct'])
             ind = 0
             thickind = 0
             for desvar in self.desvars:
-                print("storing desvar: ",key, ", ", desvar)
                 if ("thick" in desvar):
                     #use struct here, #print(self.sens[key]['struct'])
                     #struct includes geomDVs in same order
                     self.grad[key][ind] = self.sens[key]['struct'][ind]
                     thickind += 1
                 else:
-                    print(self.tacsAim.dynout[key].deriv(desvar))
                     self.grad[key][ind] = self.tacsAim.dynout[key].deriv(desvar)
+
+                print("\tdf/d{} = {:5f}".format(desvar, self.grad[key][ind]))
                 ind += 1
-        #print("finished storing results\n")
-        #print(self.grad)
+            #next function
 
     def printDesignVariables(self, desvar):
         ind = 0

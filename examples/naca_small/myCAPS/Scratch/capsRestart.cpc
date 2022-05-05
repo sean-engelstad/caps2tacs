@@ -2,21 +2,21 @@
 
 # Constant, Design, and Output Parameters:
 CFGPMTR   nspar       1.00000
-CFGPMTR   nrib       1.00000
+CFGPMTR   nrib       3.00000
 DESPMTR   area      40.00000
 DESPMTR   aspect       6.00000
 DESPMTR   taper       0.50000
-DESPMTR   ctwist       5.00000
+DESPMTR   twist       5.00000
 DESPMTR   lesweep      30.00000
 DESPMTR   dihedral       5.00000
 DESPMTR   tc0       0.10000
 DESPMTR   tcf       0.05000
 DESPMTR   camb0       0.10000
 DESPMTR   cambf       0.00000
-CFGPMTR   rootFaces      11.00000
-CFGPMTR   rootEdges      13.00000
-CFGPMTR   bottomFaces       2.00000
-CFGPMTR   rootNodes       6.00000
+CFGPMTR   rootFaces      34.00000
+CFGPMTR   rootEdges      47.00000
+CFGPMTR   bottomFaces      29.00000
+CFGPMTR   rootNodes      21.00000
 
 # Global Attributes:
 
@@ -35,12 +35,12 @@ UDPRIM    naca   thickness   tc0   Camber   camb0
 SCALE     croot   0   0   0
 UDPRIM    naca   thickness   tcf   Camber   cambf
 SCALE     ctip   0   0   0
-ROTATEZ   -ctwist   0   0
+ROTATEZ   -twist   0   0
 TRANSLATE xtip   ytip   -sspan
 LOFT      0
 ATTRIBUTE OML   0
 STORE     OML   0   0
-SET       ctipEff ctip*cosd(ctwist)
+SET       ctipEff ctip*cosd(twist)
 PATBEG    ispar   nspar
    SET       frac ispar/(nspar+1)
    SET       dx frac*(croot-ctipEff)-xtip
@@ -85,7 +85,7 @@ PATBEG    nind   4
    SELECT    node   !rootNodes[1,nind]
 ATTRIBUTE capsConstraint   $wingRoot
 PATEND
-PATBEG    find   4
+PATBEG    find   8
    SELECT    face   !bottomFaces[1,find]
 ATTRIBUTE capsLoad   $bottomWing
 PATEND
